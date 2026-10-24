@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 
 from utils.data import load_expenses
@@ -297,4 +297,3 @@ if st.button(
 
         st.error("Unable to save changes to Google Sheets.")
         st.exception(e)
-```
