@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 from utils.data import load_expenses
@@ -153,7 +152,6 @@ st.info(
 )
 
 
-# Keep the original row ID so we know which Google Sheet row to update.
 editable_df = filtered_df.sort_values(
     "Date",
     ascending=False,
@@ -237,7 +235,6 @@ if st.button(
 
             transaction_id = changed_row["ID"]
 
-            # Find the transaction in the Google Sheet.
             records = worksheet.get_all_records()
 
             sheet_row_number = None
@@ -257,16 +254,16 @@ if st.button(
             if sheet_row_number is None:
                 continue
 
-            # Validate amount.
             try:
                 amount = float(changed_row["Amount"])
             except (ValueError, TypeError):
+
                 st.error(
                     f"Invalid amount for transaction #{transaction_id}."
                 )
+
                 st.stop()
 
-            # Update Google Sheet row.
             worksheet.update(
                 f"A{sheet_row_number}:F{sheet_row_number}",
                 [[
@@ -297,3 +294,101 @@ if st.button(
 
         st.error("Unable to save changes to Google Sheets.")
         st.exception(e)
+
+
+# -----------------------------
+# Delete transaction
+# -----------------------------
+
+st.divider()
+
+st.subheader("🗑️ Delete Transaction")
+
+st.warning(
+    "Deleted transactions will be permanently removed from your "
+    "Google Sheet."
+)
+
+
+if filtered_df.empty:
+
+    st.info("There are no transactions available to delete.")
+
+else:
+
+    delete_options = filtered_df.sort_values(
+        "Date",
+        ascending=False,
+    ).copy()
+
+    delete_options["Delete Label"] = delete_options.apply(
+        lambda row: (
+            f"#{int(row['ID'])} | "
+            f"{row['Date'].strftime('%d/%m/%Y')} | "
+            f"{row['Description'] or 'No description'} | "
+            f"₹{abs(row['Amount']):,.2f}"
+        ),
+        axis=1,
+    )
+
+    selected_delete_label = st.selectbox(
+        "Select transaction to delete",
+        delete_options["Delete Label"].tolist(),
+    )
+
+    selected_delete_row = delete_options[
+        delete_options["Delete Label"] == selected_delete_label
+    ].iloc[0]
+
+    selected_delete_id = selected_delete_row["ID"]
+
+    confirm_delete = st.checkbox(
+        "I understand that this transaction will be permanently deleted."
+    )
+
+    if st.button(
+        "🗑️ Delete Transaction",
+        type="secondary",
+        disabled=not confirm_delete,
+    ):
+
+        try:
+
+            records = worksheet.get_all_records()
+
+            sheet_row_number = None
+
+            for row_number, record in enumerate(
+                records,
+                start=2,
+            ):
+
+                if str(record.get("ID", "")).strip() == str(
+                    selected_delete_id
+                ).strip():
+
+                    sheet_row_number = row_number
+                    break
+
+            if sheet_row_number is None:
+
+                st.error(
+                    f"Transaction #{selected_delete_id} "
+                    "could not be found in Google Sheets."
+                )
+
+            else:
+
+                worksheet.delete_rows(sheet_row_number)
+
+                st.success(
+                    f"✅ Transaction #{int(selected_delete_id)} "
+                    "deleted successfully!"
+                )
+
+                st.rerun()
+
+        except Exception as e:
+
+            st.error("Unable to delete the transaction.")
+            st.exception(e)
