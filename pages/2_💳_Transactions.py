@@ -64,6 +64,14 @@ with col3:
 # -----------------------------
 
 filtered_df = df.copy()
+if len(date_range) == 2:
+
+    start_date, end_date = date_range
+
+    filtered_df = filtered_df[
+        (filtered_df["Date"].dt.date >= start_date)
+        & (filtered_df["Date"].dt.date <= end_date)
+    ]
 
 
 if search_text:
@@ -107,36 +115,38 @@ if selected_category != "All":
 
 st.divider()
 
-col1, col2, col3 = st.columns(3)
+ccol1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    st.metric(
-        "Transactions",
-        len(filtered_df),
+    search_text = st.text_input(
+        "Search",
+        placeholder="Search description or person...",
     )
 
 with col2:
-    income = filtered_df.loc[
-        filtered_df["Type"] == "Income",
-        "Amount",
-    ].sum()
-
-    st.metric(
-        "Income",
-        f"₹{income:,.2f}",
+    transaction_type = st.selectbox(
+        "Type",
+        ["All", "Income", "Expense"],
     )
 
 with col3:
-    expenses = filtered_df.loc[
-        filtered_df["Type"] == "Expense",
-        "Expense Amount",
-    ].sum()
-
-    st.metric(
-        "Expenses",
-        f"₹{expenses:,.2f}",
+    categories = sorted(
+        df["Category"].dropna().unique().tolist()
     )
 
+    selected_category = st.selectbox(
+        "Category",
+        ["All"] + categories,
+    )
+
+with col4:
+    date_range = st.date_input(
+        "Date Range",
+        value=(
+            df["Date"].min().date(),
+            df["Date"].max().date(),
+        ),
+    )
 
 # -----------------------------
 # Transaction table
