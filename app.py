@@ -66,6 +66,17 @@ with col4:
 
 st.divider()
 
+# Dashboard year filter
+available_years = sorted(
+    df["Year"].dropna().astype(int).unique().tolist(),
+    reverse=True,
+)
+
+selected_year = st.selectbox(
+    "📅 Year",
+    available_years,
+)
+
 # Monthly income and expense data
 monthly_data = (
     df.groupby(["Month", "Type"])["Amount"]
