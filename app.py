@@ -137,6 +137,24 @@ st.plotly_chart(
     use_container_width=True,
 )
 
+st.subheader("🍕 Expenses by Category")
+
+category_chart = px.pie(
+    category_expenses,
+    names="Category",
+    values="Expense Amount",
+    hole=0.4,
+)
+
+category_chart.update_layout(
+    legend_title="Category",
+)
+
+st.plotly_chart(
+    category_chart,
+    use_container_width=True,
+)
+
 st.divider()
 
 st.subheader("Recent Transactions")
