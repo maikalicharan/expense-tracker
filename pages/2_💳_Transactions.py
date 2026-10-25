@@ -1,5 +1,7 @@
 import streamlit as st
 import io
+import pandas as pd
+
 from utils.data import load_expenses
 from utils.sheets import get_google_sheet
 
