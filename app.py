@@ -110,6 +110,14 @@ monthly_data["Amount"] = monthly_data.apply(
 
 st.subheader("📈 Monthly Income vs Expenses")
 
+# Category-wise expense data
+category_expenses = (
+    filtered_df[filtered_df["Type"] == "Expense"]
+    .groupby("Category")["Expense Amount"]
+    .sum()
+    .reset_index()
+)
+
 monthly_chart = px.line(
     monthly_data,
     x="Month",
