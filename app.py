@@ -87,6 +87,12 @@ selected_month = st.selectbox(
     "📅 Month",
     ["All Months"] + available_months,
 )
+
+if selected_month != "All Months":
+    filtered_df = filtered_df[
+        filtered_df["Month"] == selected_month
+    ]
+    
 monthly_data = (
     filtered_df.groupby(["Month", "Type"])["Amount"]
     .sum()
