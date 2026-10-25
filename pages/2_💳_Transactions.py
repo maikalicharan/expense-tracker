@@ -1,5 +1,4 @@
 import streamlit as st
-
 import io
 from utils.data import load_expenses
 from utils.sheets import get_google_sheet
@@ -198,13 +197,6 @@ st.download_button(
     mime="text/csv",
     use_container_width=True,
 )
-
-
-# -----------------------------
-# Excel export
-# -----------------------------
-
-import io
 
 excel_buffer = io.BytesIO()
 
