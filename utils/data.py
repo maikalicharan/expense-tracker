@@ -3,7 +3,7 @@ import streamlit as st
 
 from utils.sheets import get_google_sheet
 
-
+@st.cache_data(ttl=60)
 def load_expenses():
     worksheet = get_google_sheet()
 
