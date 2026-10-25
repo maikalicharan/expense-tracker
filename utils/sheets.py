@@ -1,10 +1,11 @@
 import json
 import os
+import streamlit as st
 
 import gspread
 from google.oauth2.service_account import Credentials
 
-
+@st.cache_resource
 def get_google_sheet():
     credentials_json = os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
     credentials_info = json.loads(credentials_json)
