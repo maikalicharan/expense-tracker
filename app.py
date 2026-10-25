@@ -81,7 +81,7 @@ selected_year = st.selectbox(
 
 filtered_df = df[df["Year"] == selected_year]
 monthly_data = (
-    df.groupby(["Month", "Type"])["Amount"]
+    filtered_df.groupby(["Month", "Type"])["Amount"]
     .sum()
     .reset_index()
 )
