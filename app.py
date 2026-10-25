@@ -102,6 +102,9 @@ st.plotly_chart(
     monthly_chart,
     use_container_width=True,
 )
+
+st.divider()
+
 st.subheader("Recent Transactions")
 
 # Show the latest 10 transactions
