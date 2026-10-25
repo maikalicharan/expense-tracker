@@ -144,6 +144,12 @@ category_chart = px.pie(
     names="Category",
     values="Expense Amount",
     hole=0.4,
+    title="Expense Distribution",
+)
+
+category_chart.update_traces(
+    textinfo="label+percent",
+    hovertemplate="<b>%{label}</b><br>₹%{value:,.2f}<extra></extra>",
 )
 
 category_chart.update_layout(
