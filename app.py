@@ -78,6 +78,8 @@ selected_year = st.selectbox(
 )
 
 # Monthly income and expense data
+
+filtered_df = df[df["Year"] == selected_year]
 monthly_data = (
     df.groupby(["Month", "Type"])["Amount"]
     .sum()
