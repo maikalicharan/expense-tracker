@@ -1,4 +1,5 @@
 import streamlit as st
+import plotly.express as px
 
 from utils.data import load_expenses
 from utils.calculations import calculate_summary
@@ -65,6 +66,21 @@ with col4:
 
 st.divider()
 
+# Monthly income and expense data
+monthly_data = (
+    df.groupby(["Month", "Type"])["Amount"]
+    .sum()
+    .reset_index()
+)
+
+monthly_data["Amount"] = monthly_data.apply(
+    lambda row: (
+        abs(row["Amount"])
+        if row["Type"] == "Expense"
+        else row["Amount"]
+    ),
+    axis=1,
+)
 st.subheader("Recent Transactions")
 
 # Show the latest 10 transactions
