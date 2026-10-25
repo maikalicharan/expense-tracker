@@ -80,6 +80,13 @@ selected_year = st.selectbox(
 # Monthly income and expense data
 
 filtered_df = df[df["Year"] == selected_year]
+available_months = sorted(
+    filtered_df["Month"].dropna().unique().tolist()
+)
+selected_month = st.selectbox(
+    "📅 Month",
+    ["All Months"] + available_months,
+)
 monthly_data = (
     filtered_df.groupby(["Month", "Type"])["Amount"]
     .sum()
