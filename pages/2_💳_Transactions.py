@@ -1,5 +1,6 @@
 import streamlit as st
 
+import io
 from utils.data import load_expenses
 from utils.sheets import get_google_sheet
 
@@ -195,6 +196,36 @@ st.download_button(
     data=csv_data,
     file_name="expense_transactions.csv",
     mime="text/csv",
+    use_container_width=True,
+)
+
+
+# -----------------------------
+# Excel export
+# -----------------------------
+
+import io
+
+excel_buffer = io.BytesIO()
+
+with pd.ExcelWriter(
+    excel_buffer,
+    engine="openpyxl",
+) as writer:
+
+    export_df.to_excel(
+        writer,
+        index=False,
+        sheet_name="Transactions",
+    )
+
+excel_buffer.seek(0)
+
+st.download_button(
+    label="📊 Download Excel",
+    data=excel_buffer,
+    file_name="expense_transactions.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     use_container_width=True,
 )
 
