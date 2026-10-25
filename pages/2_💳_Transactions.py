@@ -64,6 +64,7 @@ with col3:
 # -----------------------------
 
 filtered_df = df.copy()
+
 if len(date_range) == 2:
 
     start_date, end_date = date_range
