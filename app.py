@@ -151,7 +151,6 @@ category_chart = px.pie(
     names="Category",
     values="Expense Amount",
     hole=0.4,
-    title="Expense Distribution",
 )
 
 category_chart.update_traces(
