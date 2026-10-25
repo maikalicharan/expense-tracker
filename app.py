@@ -81,6 +81,27 @@ monthly_data["Amount"] = monthly_data.apply(
     ),
     axis=1,
 )
+
+st.subheader("📈 Monthly Income vs Expenses")
+
+monthly_chart = px.line(
+    monthly_data,
+    x="Month",
+    y="Amount",
+    color="Type",
+    markers=True,
+)
+
+monthly_chart.update_layout(
+    xaxis_title="Month",
+    yaxis_title="Amount (₹)",
+    legend_title="",
+)
+
+st.plotly_chart(
+    monthly_chart,
+    use_container_width=True,
+)
 st.subheader("Recent Transactions")
 
 # Show the latest 10 transactions
