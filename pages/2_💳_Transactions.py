@@ -34,7 +34,7 @@ except Exception as e:
 
 st.subheader("🔎 Filters")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     search_text = st.text_input(
@@ -58,12 +58,22 @@ with col3:
         ["All"] + categories,
     )
 
+with col4:
+    date_range = st.date_input(
+        "Date Range",
+        value=(
+            df["Date"].min().date(),
+            df["Date"].max().date(),
+        ),
+    )
+
 
 # -----------------------------
 # Apply filters
 # -----------------------------
 
 filtered_df = df.copy()
+
 
 if len(date_range) == 2:
 
@@ -116,38 +126,36 @@ if selected_category != "All":
 
 st.divider()
 
-ccol1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
-    search_text = st.text_input(
-        "Search",
-        placeholder="Search description or person...",
+    st.metric(
+        "Transactions",
+        len(filtered_df),
     )
 
 with col2:
-    transaction_type = st.selectbox(
-        "Type",
-        ["All", "Income", "Expense"],
+    income = filtered_df.loc[
+        filtered_df["Type"] == "Income",
+        "Amount",
+    ].sum()
+
+    st.metric(
+        "Income",
+        f"₹{income:,.2f}",
     )
 
 with col3:
-    categories = sorted(
-        df["Category"].dropna().unique().tolist()
+    expenses = filtered_df.loc[
+        filtered_df["Type"] == "Expense",
+        "Expense Amount",
+    ].sum()
+
+    st.metric(
+        "Expenses",
+        f"₹{expenses:,.2f}",
     )
 
-    selected_category = st.selectbox(
-        "Category",
-        ["All"] + categories,
-    )
-
-with col4:
-    date_range = st.date_input(
-        "Date Range",
-        value=(
-            df["Date"].min().date(),
-            df["Date"].max().date(),
-        ),
-    )
 
 # -----------------------------
 # Transaction table
