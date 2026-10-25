@@ -139,6 +139,13 @@ st.plotly_chart(
 
 st.subheader("🍕 Expenses by Category")
 
+category_total = category_expenses["Expense Amount"].sum()
+
+st.metric(
+    "💸 Total Expenses for Selection",
+    f"₹{category_total:,.2f}",
+)
+
 category_chart = px.pie(
     category_expenses,
     names="Category",
