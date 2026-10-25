@@ -34,7 +34,7 @@ savings_percentage = summary["savings_percentage"]
 
 
 # Dashboard cards
-col1, col2, col3, col4 = st.columns(4)
+col1, col2 = st.columns(2)
 
 with col1:
     st.metric(
@@ -48,6 +48,9 @@ with col2:
         f"₹{total_expenses:,.2f}",
     )
 
+
+col3, col4 = st.columns(2)
+
 with col3:
     st.metric(
         "💰 Balance",
@@ -59,7 +62,6 @@ with col4:
         "📊 Savings",
         f"{savings_percentage:,.2f}%",
     )
-
 
 st.divider()
 
