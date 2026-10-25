@@ -158,6 +158,48 @@ with col3:
 
 
 # -----------------------------
+# Export filtered transactions
+# -----------------------------
+
+st.divider()
+
+st.subheader("📥 Export Transactions")
+
+export_df = filtered_df.sort_values(
+    "Date",
+    ascending=False,
+).copy()
+
+export_df["Date"] = export_df["Date"].dt.strftime(
+    "%d/%m/%Y"
+)
+
+export_df = export_df[
+    [
+        "ID",
+        "Date",
+        "Description",
+        "Category",
+        "Amount",
+        "Type",
+        "Paid to or received from",
+    ]
+]
+
+csv_data = export_df.to_csv(
+    index=False
+).encode("utf-8")
+
+st.download_button(
+    label="📥 Download CSV",
+    data=csv_data,
+    file_name="expense_transactions.csv",
+    mime="text/csv",
+    use_container_width=True,
+)
+
+
+# -----------------------------
 # Transaction table
 # -----------------------------
 
