@@ -6,25 +6,37 @@ from utils.data import load_expenses
 from utils.calculations import calculate_summary
 
 
+# =========================================================
+# PAGE
+# =========================================================
+
 st.title("Dashboard")
 st.caption("Your financial overview")
 
 
+# =========================================================
+# LOAD DATA
+# =========================================================
+
 try:
+
     df = load_expenses()
     summary = calculate_summary(df)
 
 except Exception as e:
+
     st.error("Unable to load dashboard data.")
     st.exception(e)
     st.stop()
 
 
 if df.empty:
+
     st.info(
         "No transactions found yet. "
         "Add your first transaction to see your dashboard."
     )
+
     st.stop()
 
 
@@ -35,110 +47,225 @@ savings_percentage = summary["savings_percentage"]
 
 
 # =========================================================
+# CURRENT THEME
+# =========================================================
+
+theme = st.session_state.get(
+    "theme",
+    "Light",
+)
+
+is_dark = theme == "Dark"
+
+
+# =========================================================
+# DASHBOARD STYLES
+# =========================================================
+
+if is_dark:
+
+    st.markdown(
+        """
+        <style>
+
+        /* =================================================
+           DARK DASHBOARD
+        ================================================= */
+
+        .dashboard-section {
+            color: #f3f4f6;
+        }
+
+
+        /* =================================================
+           METRIC CARDS
+        ================================================= */
+
+        .st-key-income_card [data-testid="stMetric"] {
+            background-color: #123b27 !important;
+            border: 1px solid #2e8b57 !important;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .st-key-income_card [data-testid="stMetricLabel"] {
+            color: #8ee0ad !important;
+        }
+
+        .st-key-income_card [data-testid="stMetricValue"] {
+            color: #b8f2cb !important;
+        }
+
+
+        .st-key-expense_card [data-testid="stMetric"] {
+            background-color: #421f24 !important;
+            border: 1px solid #a84450 !important;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .st-key-expense_card [data-testid="stMetricLabel"] {
+            color: #f09aa2 !important;
+        }
+
+        .st-key-expense_card [data-testid="stMetricValue"] {
+            color: #ffc0c6 !important;
+        }
+
+
+        .st-key-balance_card [data-testid="stMetric"] {
+            background-color: #172f52 !important;
+            border: 1px solid #3978c5 !important;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .st-key-balance_card [data-testid="stMetricLabel"] {
+            color: #8eb9ed !important;
+        }
+
+        .st-key-balance_card [data-testid="stMetricValue"] {
+            color: #b9d8ff !important;
+        }
+
+
+        .st-key-savings_card [data-testid="stMetric"] {
+            background-color: #30214f !important;
+            border: 1px solid #7955b8 !important;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .st-key-savings_card [data-testid="stMetricLabel"] {
+            color: #c3a9f2 !important;
+        }
+
+        .st-key-savings_card [data-testid="stMetricValue"] {
+            color: #dfccff !important;
+        }
+
+
+        /* =================================================
+           TABLE CONTAINER
+        ================================================= */
+
+        .st-key-recent_transactions {
+            background-color: #111827 !important;
+            border: 1px solid #334155 !important;
+            border-radius: 10px;
+            padding: 0.35rem;
+        }
+
+
+        /* =================================================
+           INSIGHT
+        ================================================= */
+
+        .st-key-financial_insight {
+            background-color: #172033 !important;
+            border: 1px solid #34445f !important;
+            border-radius: 12px;
+            padding: 1rem 1.1rem;
+            color: #e5e7eb !important;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+else:
+
+    st.markdown(
+        """
+        <style>
+
+        /* =================================================
+           LIGHT DASHBOARD
+        ================================================= */
+
+        .st-key-income_card [data-testid="stMetric"] {
+            background-color: #e8f7ee !important;
+            border: 1px solid #b9e5c9 !important;
+            box-shadow: 0 3px 12px rgba(20, 25, 40, 0.05);
+        }
+
+        .st-key-income_card [data-testid="stMetricLabel"] {
+            color: #237346 !important;
+        }
+
+        .st-key-income_card [data-testid="stMetricValue"] {
+            color: #176b3b !important;
+        }
+
+
+        .st-key-expense_card [data-testid="stMetric"] {
+            background-color: #fff0ef !important;
+            border: 1px solid #f0c4c1 !important;
+            box-shadow: 0 3px 12px rgba(20, 25, 40, 0.05);
+        }
+
+        .st-key-expense_card [data-testid="stMetricLabel"] {
+            color: #a54845 !important;
+        }
+
+        .st-key-expense_card [data-testid="stMetricValue"] {
+            color: #a52f2f !important;
+        }
+
+
+        .st-key-balance_card [data-testid="stMetric"] {
+            background-color: #eaf2ff !important;
+            border: 1px solid #c4d7f5 !important;
+            box-shadow: 0 3px 12px rgba(20, 25, 40, 0.05);
+        }
+
+        .st-key-balance_card [data-testid="stMetricLabel"] {
+            color: #315f9f !important;
+        }
+
+        .st-key-balance_card [data-testid="stMetricValue"] {
+            color: #245ca8 !important;
+        }
+
+
+        .st-key-savings_card [data-testid="stMetric"] {
+            background-color: #f3edff !important;
+            border: 1px solid #d7c8f2 !important;
+            box-shadow: 0 3px 12px rgba(20, 25, 40, 0.05);
+        }
+
+        .st-key-savings_card [data-testid="stMetricLabel"] {
+            color: #6540a8 !important;
+        }
+
+        .st-key-savings_card [data-testid="stMetricValue"] {
+            color: #5834a0 !important;
+        }
+
+
+        .st-key-recent_transactions {
+            background-color: #ffffff !important;
+            border: 1px solid #e3e6ec !important;
+            border-radius: 10px;
+            padding: 0.35rem;
+        }
+
+
+        .st-key-financial_insight {
+            background-color: #ffffff !important;
+            border: 1px solid #e2e5eb !important;
+            border-radius: 12px;
+            padding: 1rem 1.1rem;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# =========================================================
 # FINANCIAL OVERVIEW
 # =========================================================
 
 st.subheader("Financial Overview")
-
-
-st.markdown(
-    """
-    <style>
-
-    /* Base card */
-
-    [data-testid="stMetric"] {
-        border-radius: 12px;
-        padding: 0.9rem 1rem;
-        min-height: 105px;
-
-        border: 1px solid;
-
-        box-shadow:
-            0 2px 8px rgba(20, 25, 40, 0.05);
-    }
-
-
-    /* Income */
-
-    .st-key-income_card [data-testid="stMetric"] {
-        background-color: #e8f7ee !important;
-        border-color: #b9e5c9 !important;
-    }
-
-    .st-key-income_card [data-testid="stMetricLabel"] {
-        color: #237346 !important;
-    }
-
-    .st-key-income_card [data-testid="stMetricValue"] {
-        color: #176b3b !important;
-    }
-
-
-    /* Expenses */
-
-    .st-key-expense_card [data-testid="stMetric"] {
-        background-color: #fff0ef !important;
-        border-color: #f0c4c1 !important;
-    }
-
-    .st-key-expense_card [data-testid="stMetricLabel"] {
-        color: #a54845 !important;
-    }
-
-    .st-key-expense_card [data-testid="stMetricValue"] {
-        color: #a52f2f !important;
-    }
-
-
-    /* Balance */
-
-    .st-key-balance_card [data-testid="stMetric"] {
-        background-color: #eaf2ff !important;
-        border-color: #c4d7f5 !important;
-    }
-
-    .st-key-balance_card [data-testid="stMetricLabel"] {
-        color: #315f9f !important;
-    }
-
-    .st-key-balance_card [data-testid="stMetricValue"] {
-        color: #245ca8 !important;
-    }
-
-
-    /* Savings */
-
-    .st-key-savings_card [data-testid="stMetric"] {
-        background-color: #f3edff !important;
-        border-color: #d7c8f2 !important;
-    }
-
-    .st-key-savings_card [data-testid="stMetricLabel"] {
-        color: #6540a8 !important;
-    }
-
-    .st-key-savings_card [data-testid="stMetricValue"] {
-        color: #5834a0 !important;
-    }
-
-
-    /* Text */
-
-    [data-testid="stMetricLabel"] {
-        font-size: 0.78rem !important;
-        font-weight: 650 !important;
-    }
-
-    [data-testid="stMetricValue"] {
-        font-size: 1.4rem !important;
-        font-weight: 750 !important;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
 
 col1, col2, col3, col4 = st.columns(4)
@@ -182,6 +309,7 @@ with col4:
             "Savings Rate",
             f"{savings_percentage:.1f}%",
         )
+
 
 # =========================================================
 # MONTHLY OVERVIEW
@@ -280,19 +408,46 @@ monthly_chart = px.bar(
 )
 
 
-theme = st.session_state.get("theme", "Light")
+# =========================================================
+# CHART COLORS
+# =========================================================
 
-if theme == "Dark":
+income_bar_color = "#35B96F"
+expense_bar_color = "#E45B61"
+
+
+monthly_chart.update_traces(
+    marker_line_width=0,
+)
+
+
+monthly_chart.update_traces(
+    marker_color=income_bar_color,
+    selector={"name": "Income"},
+)
+
+
+monthly_chart.update_traces(
+    marker_color=expense_bar_color,
+    selector={"name": "Expenses"},
+)
+
+
+# =========================================================
+# CHART THEME
+# =========================================================
+
+if is_dark:
 
     chart_background = "#0f172a"
+    chart_text = "#d1d5db"
     chart_grid = "#334155"
-    chart_text = "#cbd5e1"
 
 else:
 
-    chart_background = "white"
-    chart_grid = "#eef0f4"
+    chart_background = "#ffffff"
     chart_text = "#555c69"
+    chart_grid = "#eef0f4"
 
 
 monthly_chart.update_layout(
@@ -320,12 +475,19 @@ monthly_chart.update_layout(
         color=chart_text,
     ),
 
+    legend=dict(
+        font=dict(
+            color=chart_text,
+        ),
+    ),
+
     xaxis=dict(
         showgrid=False,
         tickfont=dict(
             size=11,
             color=chart_text,
         ),
+        linecolor=chart_grid,
     ),
 
     yaxis=dict(
@@ -335,6 +497,7 @@ monthly_chart.update_layout(
             size=11,
             color=chart_text,
         ),
+        linecolor=chart_grid,
     ),
 )
 
@@ -377,7 +540,9 @@ recent_transactions = (
 
 if recent_transactions.empty:
 
-    st.info("No transactions available.")
+    st.info(
+        "No transactions available."
+    )
 
 else:
 
@@ -385,6 +550,7 @@ else:
         recent_transactions["Date"]
         .dt.strftime("%d/%m/%Y")
     )
+
 
     recent_display = recent_transactions[
         [
@@ -397,24 +563,94 @@ else:
         ]
     ].copy()
 
-    st.dataframe(
-        recent_display,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Date": "Date",
-            "Description": "Description",
-            "Category": "Category",
-            "Amount": st.column_config.NumberColumn(
-                "Amount",
-                format="₹%.2f",
-            ),
-            "Type": "Type",
-            "Paid to or received from": (
-                "Paid to / Received from"
-            ),
-        },
+
+    # =====================================================
+    # TABLE COLORS
+    # =====================================================
+
+    if is_dark:
+
+        table_background = "#111827"
+        table_text = "#e5e7eb"
+        table_header = "#1e293b"
+        table_border = "#334155"
+
+    else:
+
+        table_background = "#ffffff"
+        table_text = "#303642"
+        table_header = "#f3f5f8"
+        table_border = "#e3e6ec"
+
+
+    styled_table = (
+        recent_display.style
+        .set_properties(
+            **{
+                "background-color": table_background,
+                "color": table_text,
+                "border-color": table_border,
+            }
+        )
+        .set_table_styles(
+            [
+                {
+                    "selector": "th",
+                    "props": [
+                        (
+                            "background-color",
+                            table_header,
+                        ),
+                        (
+                            "color",
+                            table_text,
+                        ),
+                        (
+                            "font-weight",
+                            "600",
+                        ),
+                        (
+                            "border-color",
+                            table_border,
+                        ),
+                    ],
+                },
+                {
+                    "selector": "td",
+                    "props": [
+                        (
+                            "border-color",
+                            table_border,
+                        ),
+                    ],
+                },
+            ]
+        )
     )
+
+
+    with st.container(
+        key="recent_transactions"
+    ):
+
+        st.dataframe(
+            styled_table,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Date": "Date",
+                "Description": "Description",
+                "Category": "Category",
+                "Amount": st.column_config.NumberColumn(
+                    "Amount",
+                    format="₹%.2f",
+                ),
+                "Type": "Type",
+                "Paid to or received from": (
+                    "Paid to / Received from"
+                ),
+            },
+        )
 
 
 # =========================================================
@@ -489,30 +725,38 @@ else:
     insight_type = "info"
 
 
-if insight_type == "success":
+# =========================================================
+# INSIGHT CARD
+# =========================================================
 
-    st.success(
-        f"**{insight_title}**\n\n"
-        f"{insight_text}"
-    )
+with st.container(
+    key="financial_insight"
+):
 
-elif insight_type == "error":
+    if insight_type == "success":
 
-    st.error(
-        f"**{insight_title}**\n\n"
-        f"{insight_text}"
-    )
+        st.success(
+            f"**{insight_title}**\n\n"
+            f"{insight_text}"
+        )
 
-elif insight_type == "warning":
+    elif insight_type == "error":
 
-    st.warning(
-        f"**{insight_title}**\n\n"
-        f"{insight_text}"
-    )
+        st.error(
+            f"**{insight_title}**\n\n"
+            f"{insight_text}"
+        )
 
-else:
+    elif insight_type == "warning":
 
-    st.info(
-        f"**{insight_title}**\n\n"
-        f"{insight_text}"
-    )
+        st.warning(
+            f"**{insight_title}**\n\n"
+            f"{insight_text}"
+        )
+
+    else:
+
+        st.info(
+            f"**{insight_title}**\n\n"
+            f"{insight_text}"
+        )
