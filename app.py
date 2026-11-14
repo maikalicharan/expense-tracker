@@ -8,10 +8,6 @@ st.set_page_config(
 )
 
 
-# ============================================================
-# PAGE NAVIGATION
-# ============================================================
-
 dashboard = st.Page(
     "pages/dashboard.py",
     title="Dashboard",
@@ -28,6 +24,12 @@ add_transaction = st.Page(
     "pages/add_transaction.py",
     title="Add Transaction",
     icon="➕",
+)
+
+transactions = st.Page(
+    "pages/transactions.py",
+    title="Transactions",
+    icon="💳",
 )
 
 planning = st.Page(
@@ -55,10 +57,6 @@ settings = st.Page(
 )
 
 
-# ============================================================
-# SIDEBAR NAVIGATION
-# ============================================================
-
 pg = st.navigation(
     {
         "Main": [
@@ -67,6 +65,7 @@ pg = st.navigation(
         "Transactions": [
             account_history,
             add_transaction,
+            transactions,
         ],
         "Financial Planning": [
             planning,
@@ -84,10 +83,6 @@ pg = st.navigation(
 )
 
 
-# ============================================================
-# SIDEBAR BRANDING
-# ============================================================
-
 with st.sidebar:
 
     st.markdown("---")
@@ -98,9 +93,5 @@ with st.sidebar:
         "Your personal financial management tool"
     )
 
-
-# ============================================================
-# RUN SELECTED PAGE
-# ============================================================
 
 pg.run()
