@@ -257,6 +257,24 @@ st.plotly_chart(
     use_container_width=True,
 )
 
+st.subheader("📂 Category Breakdown")
+
+category_breakdown = (
+    filtered_df
+    .groupby("Category")
+    .agg(
+        Spent=("Expense Amount", "sum"),
+        Earned=("Amount", lambda x: x[x > 0].sum()),
+    )
+    .reset_index()
+)
+
+st.dataframe(
+    category_breakdown,
+    use_container_width=True,
+    hide_index=True,
+)
+
 st.subheader("🍕 Expenses by Category")
 
 category_total = category_expenses["Expense Amount"].sum()
