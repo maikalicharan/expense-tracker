@@ -159,6 +159,15 @@ monthly_summary = (
     .reset_index()
 )
 
+month_display = {
+    f"{selected_year}-{month:02d}": month_names[month - 1]
+    for month in range(1, 13)
+}
+
+monthly_summary["Month"] = monthly_summary["Month"].map(
+    month_display
+)
+
 if "Income" not in monthly_summary.columns:
     monthly_summary["Income"] = 0
 
