@@ -304,6 +304,21 @@ category_breakdown = (
     .reset_index()
 )
 
+category_breakdown["Net"] = (
+    category_breakdown["Earned"]
+    - category_breakdown["Spent"]
+)
+
+category_breakdown = category_breakdown[
+    [
+        "Category",
+        "Earned",
+        "Spent",
+        "Net",
+    ]
+]
+)
+
 st.dataframe(
     category_breakdown,
     use_container_width=True,
