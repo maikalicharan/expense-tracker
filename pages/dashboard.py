@@ -45,32 +45,134 @@ st.markdown(
     """
     <style>
 
+    /* =================================================
+       DASHBOARD METRIC CARDS
+    ================================================= */
+
     [data-testid="stMetric"] {
-        background: #ffffff;
-        border: 1px solid #e1e5ec;
         border-radius: 12px;
         padding: 0.9rem 1rem;
         min-height: 105px;
-        box-shadow: 0 2px 8px rgba(20, 25, 40, 0.04);
+
+        box-shadow:
+            0 2px 8px rgba(20, 25, 40, 0.05);
+
+        border: 1px solid transparent;
     }
+
+
+    /* =================================================
+       INCOME
+    ================================================= */
+
+    [data-testid="stMetric"]:nth-child(1) {
+        background-color: #e8f7ee;
+        border-color: #b9e5c9;
+    }
+
+
+    /* =================================================
+       EXPENSE
+    ================================================= */
+
+    [data-testid="stMetric"]:nth-child(2) {
+        background-color: #fff0ef;
+        border-color: #f0c4c1;
+    }
+
+
+    /* =================================================
+       BALANCE
+    ================================================= */
+
+    [data-testid="stMetric"]:nth-child(3) {
+        background-color: #eaf2ff;
+        border-color: #c4d7f5;
+    }
+
+
+    /* =================================================
+       SAVINGS
+    ================================================= */
+
+    [data-testid="stMetric"]:nth-child(4) {
+        background-color: #f3edff;
+        border-color: #d7c8f2;
+    }
+
+
+    /* =================================================
+       LABEL
+    ================================================= */
 
     [data-testid="stMetricLabel"] {
         font-size: 0.78rem !important;
-        font-weight: 600 !important;
-        color: #606776 !important;
+        font-weight: 650 !important;
     }
+
+
+    /* =================================================
+       VALUE
+    ================================================= */
 
     [data-testid="stMetricValue"] {
         font-size: 1.4rem !important;
         font-weight: 750 !important;
-        color: #252a34 !important;
     }
+
+
+    /* =================================================
+       CARD TEXT COLORS
+    ================================================= */
+
+    [data-testid="stMetric"]:nth-child(1)
+    [data-testid="stMetricLabel"] {
+        color: #237346 !important;
+    }
+
+    [data-testid="stMetric"]:nth-child(1)
+    [data-testid="stMetricValue"] {
+        color: #176b3b !important;
+    }
+
+
+    [data-testid="stMetric"]:nth-child(2)
+    [data-testid="stMetricLabel"] {
+        color: #a54845 !important;
+    }
+
+    [data-testid="stMetric"]:nth-child(2)
+    [data-testid="stMetricValue"] {
+        color: #a52f2f !important;
+    }
+
+
+    [data-testid="stMetric"]:nth-child(3)
+    [data-testid="stMetricLabel"] {
+        color: #315f9f !important;
+    }
+
+    [data-testid="stMetric"]:nth-child(3)
+    [data-testid="stMetricValue"] {
+        color: #245ca8 !important;
+    }
+
+
+    [data-testid="stMetric"]:nth-child(4)
+    [data-testid="stMetricLabel"] {
+        color: #6540a8 !important;
+    }
+
+    [data-testid="stMetric"]:nth-child(4)
+    [data-testid="stMetricValue"] {
+        color: #5834a0 !important;
+    }
+
 
     </style>
     """,
     unsafe_allow_html=True,
 )
-
 
 col1, col2, col3, col4 = st.columns(4)
 
