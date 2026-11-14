@@ -85,9 +85,20 @@ filtered_df = year_df.copy()
 available_months = sorted(
     filtered_df["Month"].dropna().unique().tolist()
 )
+
+month_display = {
+    f"{selected_year}-{month:02d}": month_names[month - 1]
+    for month in range(1, 13)
+}
+
+month_options = [
+    month_display[month]
+    for month in available_months
+]
+
 selected_month = st.selectbox(
     "📅 Month",
-    ["All Months"] + available_months,
+    ["All Months"] + month_options,
 )
 
 if selected_month != "All Months":
