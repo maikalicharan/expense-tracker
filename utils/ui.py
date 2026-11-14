@@ -3,10 +3,7 @@ import streamlit as st
 
 def apply_custom_css():
 
-    theme = st.session_state.get(
-        "theme",
-        "Light",
-    )
+    theme = st.session_state.get("theme", "Light")
 
     if theme == "Dark":
 
@@ -15,130 +12,239 @@ def apply_custom_css():
             <style>
 
             /* =================================================
-               DARK THEME
+               DARK THEME - GLOBAL
             ================================================= */
 
             .stApp {
-                background-color: #111827;
-                color: #e5e7eb;
+                background-color: #0f172a !important;
+                color: #e5e7eb !important;
             }
 
             .main .block-container {
-                color: #e5e7eb;
+                color: #e5e7eb !important;
             }
+
+
+            /* =================================================
+               TEXT
+            ================================================= */
 
             h1,
             h2,
-            h3 {
+            h3,
+            h4,
+            h5,
+            h6 {
                 color: #f3f4f6 !important;
             }
 
             p,
+            label,
             .stCaption {
-                color: #9ca3af !important;
+                color: #aeb7c5 !important;
             }
 
 
-            /* Sidebar */
+            /* =================================================
+               SIDEBAR
+            ================================================= */
 
             section[data-testid="stSidebar"] {
-                background-color: #0f172a;
-                border-right: 1px solid #273244;
+                background-color: #0b1220 !important;
+                border-right: 1px solid #273449 !important;
             }
 
             section[data-testid="stSidebar"] a {
-                color: #d1d5db !important;
+                color: #d7dde8 !important;
             }
 
             section[data-testid="stSidebar"] a:hover {
-                background-color: #1e293b;
+                background-color: #182235 !important;
             }
 
 
-            /* Buttons */
+            /* =================================================
+               BUTTONS
+            ================================================= */
 
-            .stButton > button {
-                background-color: #1f2937;
-                color: #e5e7eb;
-                border-color: #374151;
+            .stButton > button,
+            .stDownloadButton > button,
+            .stFormSubmitButton > button {
+                background-color: #1e293b !important;
+                color: #e5e7eb !important;
+                border: 1px solid #3b475a !important;
+                box-shadow: none !important;
             }
 
-            .stButton > button:hover {
-                background-color: #374151;
-                border-color: #4b5563;
+            .stButton > button:hover,
+            .stDownloadButton > button:hover,
+            .stFormSubmitButton > button:hover {
+                background-color: #334155 !important;
+                border-color: #64748b !important;
+                color: #ffffff !important;
             }
 
-            .stButton > button[kind="primary"] {
-                background-color: #315fce;
-                border-color: #315fce;
-                color: white;
+            .stButton > button[kind="primary"],
+            .stFormSubmitButton > button[kind="primary"] {
+                background-color: #315fce !important;
+                border-color: #315fce !important;
+                color: #ffffff !important;
+            }
+
+            .stButton > button[kind="primary"]:hover,
+            .stFormSubmitButton > button[kind="primary"]:hover {
+                background-color: #3d70df !important;
+                border-color: #3d70df !important;
             }
 
 
-            /* Inputs */
+            /* =================================================
+               TEXT INPUTS
+            ================================================= */
 
             .stTextInput input,
             .stNumberInput input,
             .stDateInput input {
-                background-color: #1f2937;
-                color: #f3f4f6;
-                border-color: #374151;
+                background-color: #1e293b !important;
+                color: #f3f4f6 !important;
+                border: 1px solid #3b475a !important;
             }
 
-            .stTextInput input:focus,
-            .stNumberInput input:focus,
-            .stDateInput input:focus {
-                border-color: #6d8fe5;
+            .stTextInput input::placeholder,
+            .stNumberInput input::placeholder {
+                color: #7f8a9b !important;
             }
 
 
-            /* Selectboxes */
+            /* =================================================
+               DROPDOWNS
+            ================================================= */
 
             .stSelectbox [data-baseweb="select"] > div,
             .stMultiSelect [data-baseweb="select"] > div {
-                background-color: #1f2937;
-                color: #f3f4f6;
-                border-color: #374151;
+                background-color: #1e293b !important;
+                color: #f3f4f6 !important;
+                border: 1px solid #3b475a !important;
+            }
+
+            .stSelectbox [data-baseweb="select"] *,
+            .stMultiSelect [data-baseweb="select"] * {
+                color: #f3f4f6 !important;
             }
 
 
-            /* Metrics */
+            /* Dropdown popup */
+
+            div[data-baseweb="popover"] {
+                background-color: #1e293b !important;
+                border: 1px solid #3b475a !important;
+            }
+
+            div[data-baseweb="menu"] {
+                background-color: #1e293b !important;
+            }
+
+            div[data-baseweb="menu"] li {
+                background-color: #1e293b !important;
+                color: #f3f4f6 !important;
+            }
+
+            div[data-baseweb="menu"] li:hover {
+                background-color: #334155 !important;
+            }
+
+
+            /* =================================================
+               DATE PICKER
+            ================================================= */
+
+            div[data-baseweb="calendar"] {
+                background-color: #1e293b !important;
+                color: #f3f4f6 !important;
+            }
+
+
+            /* =================================================
+               METRIC CARDS
+            ================================================= */
 
             [data-testid="stMetric"] {
-                background-color: #1f2937;
-                border-color: #374151;
+                background-color: #1e293b;
+                border-color: #334155;
+                color: #f3f4f6;
+            }
+
+            [data-testid="stMetricLabel"] {
+                color: #aeb7c5 !important;
+            }
+
+            [data-testid="stMetricValue"] {
+                color: #f3f4f6 !important;
             }
 
 
-            /* Tables */
+            /* =================================================
+               DATAFRAME / TABLE
+            ================================================= */
 
             [data-testid="stDataFrame"] {
-                background-color: #1f2937;
-                border-color: #374151;
+                background-color: #1e293b !important;
+                border: 1px solid #334155 !important;
+            }
+
+            [data-testid="stDataEditor"] {
+                background-color: #1e293b !important;
+                border: 1px solid #334155 !important;
             }
 
 
-            /* Expanders */
-
-            [data-testid="stExpander"] {
-                background-color: #1f2937;
-                border-color: #374151;
-            }
-
-
-            /* Dividers */
-
-            hr {
-                border-color: #374151;
-            }
-
-
-            /* Alerts */
+            /* =================================================
+               ALERTS
+            ================================================= */
 
             [data-testid="stAlert"] {
-                background-color: #1f2937;
-                border-color: #374151;
+                background-color: #1e293b !important;
+                color: #e5e7eb !important;
+                border-color: #3b475a !important;
             }
+
+
+            /* =================================================
+               EXPANDERS
+            ================================================= */
+
+            [data-testid="stExpander"] {
+                background-color: #1e293b !important;
+                border: 1px solid #334155 !important;
+            }
+
+
+            /* =================================================
+               DIVIDERS
+            ================================================= */
+
+            hr {
+                border-color: #334155 !important;
+            }
+
+
+            /* =================================================
+               CHECKBOX
+            ================================================= */
+
+            [data-testid="stCheckbox"] label {
+                color: #d7dde8 !important;
+            }
+
+
+            /* =================================================
+               PLOTLY CONTAINER
+            ================================================= */
+
+            .js-plotly-plot {
+                background-color: #0f172a !important;
+            }
+
 
             </style>
             """,
@@ -152,31 +258,25 @@ def apply_custom_css():
             <style>
 
             /* =================================================
-               LIGHT THEME
+               LIGHT THEME - GLOBAL
             ================================================= */
 
             .stApp {
-                background-color: #f7f8fc;
-                color: #20242d;
-            }
-
-            .main .block-container {
-                color: #20242d;
-            }
-
-            h1 {
+                background-color: #f7f8fc !important;
                 color: #20242d !important;
             }
 
-            h2 {
-                color: #252a34 !important;
-            }
-
-            h3 {
-                color: #303642 !important;
+            h1,
+            h2,
+            h3,
+            h4,
+            h5,
+            h6 {
+                color: #20242d !important;
             }
 
             p,
+            label,
             .stCaption {
                 color: #555c69 !important;
             }
@@ -185,28 +285,33 @@ def apply_custom_css():
             /* Sidebar */
 
             section[data-testid="stSidebar"] {
-                background-color: #ffffff;
-                border-right: 1px solid #e5e7ed;
+                background-color: #ffffff !important;
+                border-right: 1px solid #e5e7ed !important;
             }
 
 
             /* Buttons */
 
-            .stButton > button {
-                background-color: #ffffff;
-                color: #303642;
-                border-color: #d4d9e2;
+            .stButton > button,
+            .stDownloadButton > button,
+            .stFormSubmitButton > button {
+                background-color: #ffffff !important;
+                color: #303642 !important;
+                border: 1px solid #d4d9e2 !important;
             }
 
-            .stButton > button:hover {
-                background-color: #f3f5f8;
-                border-color: #9ba4b3;
+            .stButton > button:hover,
+            .stDownloadButton > button:hover,
+            .stFormSubmitButton > button:hover {
+                background-color: #f3f5f8 !important;
+                border-color: #9ba4b3 !important;
             }
 
-            .stButton > button[kind="primary"] {
-                background-color: #315fce;
-                border-color: #315fce;
-                color: #ffffff;
+            .stButton > button[kind="primary"],
+            .stFormSubmitButton > button[kind="primary"] {
+                background-color: #315fce !important;
+                border-color: #315fce !important;
+                color: #ffffff !important;
             }
 
 
@@ -215,34 +320,43 @@ def apply_custom_css():
             .stTextInput input,
             .stNumberInput input,
             .stDateInput input {
-                background-color: #ffffff;
-                color: #20242d;
-                border-color: #d9dde6;
+                background-color: #ffffff !important;
+                color: #20242d !important;
+                border-color: #d9dde6 !important;
             }
 
 
-            /* Selectboxes */
+            /* Dropdowns */
 
             .stSelectbox [data-baseweb="select"] > div,
             .stMultiSelect [data-baseweb="select"] > div {
-                background-color: #ffffff;
-                color: #20242d;
-                border-color: #d4d9e2;
+                background-color: #ffffff !important;
+                color: #20242d !important;
+                border-color: #d4d9e2 !important;
+            }
+
+
+            /* Tables */
+
+            [data-testid="stDataFrame"],
+            [data-testid="stDataEditor"] {
+                background-color: #ffffff !important;
+                border-color: #e3e6ec !important;
             }
 
 
             /* Expanders */
 
             [data-testid="stExpander"] {
-                background-color: #ffffff;
-                border-color: #e2e5eb;
+                background-color: #ffffff !important;
+                border-color: #e2e5eb !important;
             }
 
 
             /* Dividers */
 
             hr {
-                border-color: #e5e7ed;
+                border-color: #e5e7ed !important;
             }
 
             </style>
