@@ -45,121 +45,85 @@ st.markdown(
     """
     <style>
 
-    /* =================================================
-       ALL METRIC CARDS
-    ================================================= */
+    /* Base card */
 
     [data-testid="stMetric"] {
         border-radius: 12px;
         padding: 0.9rem 1rem;
         min-height: 105px;
 
+        border: 1px solid;
+
         box-shadow:
             0 2px 8px rgba(20, 25, 40, 0.05);
-
-        border: 1px solid;
     }
 
 
-    /* =================================================
-       INCOME - GREEN
-    ================================================= */
+    /* Income */
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(1)
-    [data-testid="stMetric"] {
+    .st-key-income_card [data-testid="stMetric"] {
         background-color: #e8f7ee !important;
         border-color: #b9e5c9 !important;
     }
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(1)
-    [data-testid="stMetricLabel"] {
+    .st-key-income_card [data-testid="stMetricLabel"] {
         color: #237346 !important;
     }
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(1)
-    [data-testid="stMetricValue"] {
+    .st-key-income_card [data-testid="stMetricValue"] {
         color: #176b3b !important;
     }
 
 
-    /* =================================================
-       EXPENSES - RED
-    ================================================= */
+    /* Expenses */
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(2)
-    [data-testid="stMetric"] {
+    .st-key-expense_card [data-testid="stMetric"] {
         background-color: #fff0ef !important;
         border-color: #f0c4c1 !important;
     }
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(2)
-    [data-testid="stMetricLabel"] {
+    .st-key-expense_card [data-testid="stMetricLabel"] {
         color: #a54845 !important;
     }
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(2)
-    [data-testid="stMetricValue"] {
+    .st-key-expense_card [data-testid="stMetricValue"] {
         color: #a52f2f !important;
     }
 
 
-    /* =================================================
-       BALANCE - BLUE
-    ================================================= */
+    /* Balance */
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(3)
-    [data-testid="stMetric"] {
+    .st-key-balance_card [data-testid="stMetric"] {
         background-color: #eaf2ff !important;
         border-color: #c4d7f5 !important;
     }
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(3)
-    [data-testid="stMetricLabel"] {
+    .st-key-balance_card [data-testid="stMetricLabel"] {
         color: #315f9f !important;
     }
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(3)
-    [data-testid="stMetricValue"] {
+    .st-key-balance_card [data-testid="stMetricValue"] {
         color: #245ca8 !important;
     }
 
 
-    /* =================================================
-       SAVINGS - PURPLE
-    ================================================= */
+    /* Savings */
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(4)
-    [data-testid="stMetric"] {
+    .st-key-savings_card [data-testid="stMetric"] {
         background-color: #f3edff !important;
         border-color: #d7c8f2 !important;
     }
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(4)
-    [data-testid="stMetricLabel"] {
+    .st-key-savings_card [data-testid="stMetricLabel"] {
         color: #6540a8 !important;
     }
 
-    [data-testid="stHorizontalBlock"]
-    > [data-testid="column"]:nth-child(4)
-    [data-testid="stMetricValue"] {
+    .st-key-savings_card [data-testid="stMetricValue"] {
         color: #5834a0 !important;
     }
 
 
-    /* =================================================
-       TEXT SIZE
-    ================================================= */
+    /* Text */
 
     [data-testid="stMetricLabel"] {
         font-size: 0.78rem !important;
@@ -175,36 +139,49 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+
 col1, col2, col3, col4 = st.columns(4)
 
 
 with col1:
-    st.metric(
-        "Total Income",
-        f"₹{total_income:,.2f}",
-    )
+
+    with st.container(key="income_card"):
+
+        st.metric(
+            "Total Income",
+            f"₹{total_income:,.2f}",
+        )
 
 
 with col2:
-    st.metric(
-        "Total Expenses",
-        f"₹{total_expenses:,.2f}",
-    )
+
+    with st.container(key="expense_card"):
+
+        st.metric(
+            "Total Expenses",
+            f"₹{total_expenses:,.2f}",
+        )
 
 
 with col3:
-    st.metric(
-        "Current Balance",
-        f"₹{balance:,.2f}",
-    )
+
+    with st.container(key="balance_card"):
+
+        st.metric(
+            "Current Balance",
+            f"₹{balance:,.2f}",
+        )
 
 
 with col4:
-    st.metric(
-        "Savings Rate",
-        f"{savings_percentage:.1f}%",
-    )
 
+    with st.container(key="savings_card"):
+
+        st.metric(
+            "Savings Rate",
+            f"{savings_percentage:.1f}%",
+        )
 
 # =========================================================
 # MONTHLY OVERVIEW
