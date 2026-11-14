@@ -411,9 +411,13 @@ else:
                 min_value=0.01,
             ),
 
-            "Original Type": st.column_config.TextColumn(
+            "Type": st.column_config.SelectboxColumn(
                 "Type",
-                disabled=True,
+                   options=[
+                    "Income",
+                    "Expense",
+                  ],
+                    required=True,
             ),
 
             "Paid to or received from":
