@@ -79,8 +79,8 @@ selected_year = st.selectbox(
 
 # Monthly income and expense data
 
-filtered_df = df[df["Year"] == selected_year]
-available_months = sorted(
+year_df = df[df["Year"] == selected_year]
+filtered_df = year_df.copy()
     filtered_df["Month"].dropna().unique().tolist()
 )
 selected_month = st.selectbox(
