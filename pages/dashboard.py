@@ -760,3 +760,248 @@ with st.container(
             f"**{insight_title}**\n\n"
             f"{insight_text}"
         )
+
+# --------------------------------------------------
+# FINANCIAL GOALS
+# --------------------------------------------------
+
+st.divider()
+
+st.subheader("Financial Goals")
+
+
+try:
+
+    expenses_worksheet = get_google_sheet()
+
+    spreadsheet = expenses_worksheet.spreadsheet
+
+    goals_worksheet = spreadsheet.worksheet(
+        "Financial_Goals"
+    )
+
+    goal_records = goals_worksheet.get_all_records()
+
+    goals_df = pd.DataFrame(goal_records)
+
+except Exception:
+
+    goals_df = pd.DataFrame()
+
+
+if goals_df.empty:
+
+    st.info(
+        "No financial goals created yet. "
+        "Create a goal from the Goals section."
+    )
+
+else:
+
+    goals_df["Target Amount"] = pd.to_numeric(
+        goals_df["Target Amount"],
+        errors="coerce",
+    ).fillna(0)
+
+    goals_df["Current Saved"] = pd.to_numeric(
+        goals_df["Current Saved"],
+        errors="coerce",
+    ).fillna(0)
+
+
+    active_goals = goals_df[
+        goals_df["Current Saved"]
+        < goals_df["Target Amount"]
+    ].copy()
+
+
+    completed_goals = goals_df[
+        goals_df["Current Saved"]
+        >= goals_df["Target Amount"]
+    ].copy()
+
+
+    # ----------------------------------------------
+    # GOAL SUMMARY
+    # ----------------------------------------------
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
+
+        st.metric(
+            "Active Goals",
+            len(active_goals),
+        )
+
+
+    with col2:
+
+        st.metric(
+            "Completed Goals",
+            len(completed_goals),
+        )
+
+
+    with col3:
+
+        total_remaining = (
+            active_goals["Target Amount"]
+            - active_goals["Current Saved"]
+        ).clip(lower=0).sum()
+
+        st.metric(
+            "Total Remaining",
+            f"₹{total_remaining:,.2f}",
+        )
+
+
+    st.divider()
+
+
+    # ----------------------------------------------
+    # SHOW ACTIVE GOALS
+    # ----------------------------------------------
+
+    if active_goals.empty:
+
+        st.success(
+            "🎉 All your financial goals are completed!"
+        )
+
+    else:
+
+        for _, goal in active_goals.iterrows():
+
+            goal_name = str(
+                goal["Goal Name"]
+            )
+
+            target_amount = float(
+                goal["Target Amount"]
+            )
+
+            current_saved = float(
+                goal["Current Saved"]
+            )
+
+            remaining_amount = max(
+                target_amount - current_saved,
+                0,
+            )
+
+
+            if target_amount > 0:
+
+                progress = (
+                    current_saved
+                    / target_amount
+                )
+
+                progress = min(
+                    max(progress, 0),
+                    1,
+                )
+
+            else:
+
+                progress = 0
+
+
+            st.markdown(
+                f"**{goal_name}**"
+            )
+
+
+            st.progress(
+                progress,
+                text=f"{progress * 100:.1f}% completed",
+            )
+
+
+            col1, col2, col3 = st.columns(3)
+
+
+            with col1:
+
+                st.caption("Saved")
+
+                st.write(
+                    f"₹{current_saved:,.2f}"
+                )
+
+
+            with col2:
+
+                st.caption("Target")
+
+                st.write(
+                    f"₹{target_amount:,.2f}"
+                )
+
+
+            with col3:
+
+                st.caption("Remaining")
+
+                st.write(
+                    f"₹{remaining_amount:,.2f}"
+                )
+
+
+            target_date_text = str(
+                goal["Target Date"]
+            )
+
+
+            try:
+
+                target_date = pd.to_datetime(
+                    target_date_text,
+                    dayfirst=True,
+                ).date()
+
+
+                today = date.today()
+
+                days_remaining = (
+                    target_date - today
+                ).days
+
+
+                if days_remaining > 0:
+
+                    months_remaining = max(
+                        days_remaining / 30.44,
+                        1,
+                    )
+
+
+                    required_monthly_saving = (
+                        remaining_amount
+                        / months_remaining
+                    )
+
+
+                    st.caption(
+                        f"Target: {target_date.strftime('%d/%m/%Y')} "
+                        f"• {days_remaining} days remaining "
+                        f"• Required monthly saving: "
+                        f"₹{required_monthly_saving:,.2f}"
+                    )
+
+                else:
+
+                    st.warning(
+                        "Target date has passed."
+                    )
+
+            except Exception:
+
+                st.caption(
+                    f"Target: {target_date_text}"
+                )
+
+
+            st.divider()
