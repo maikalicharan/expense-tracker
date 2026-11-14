@@ -11,11 +11,14 @@ st.set_page_config(
 apply_custom_css()
 
 
+# Main
 dashboard = st.Page(
     "pages/dashboard.py",
     title="Dashboard",
 )
 
+
+# Transactions
 account_history = st.Page(
     "pages/account_history.py",
     title="Account History",
@@ -31,6 +34,8 @@ transactions = st.Page(
     title="Transactions",
 )
 
+
+# Planning
 planning = st.Page(
     "pages/planning.py",
     title="Planning",
@@ -51,6 +56,8 @@ calculators = st.Page(
     title="Calculators",
 )
 
+
+# System
 settings = st.Page(
     "pages/settings.py",
     title="Settings",
@@ -62,16 +69,20 @@ pg = st.navigation(
         "Main": [
             dashboard,
         ],
+
         "Transactions": [
             account_history,
             add_transaction,
             transactions,
         ],
+
         "Planning": [
             planning,
+            financial_health,
             investments,
             calculators,
         ],
+
         "System": [
             settings,
         ],
@@ -80,24 +91,8 @@ pg = st.navigation(
 
 
 with st.sidebar:
-
-    st.markdown(
-        """
-        <div style="
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #20242d;
-            margin-bottom: 0.25rem;
-        ">
-            My Finance
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.caption(
-        "Personal financial management"
-    )
+    st.markdown("### My Finance")
+    st.caption("Personal financial management")
 
 
 pg.run()
