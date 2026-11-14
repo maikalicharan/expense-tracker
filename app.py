@@ -151,6 +151,36 @@ monthly_summary["Net Balance"] = (
     - monthly_summary["Expense"]
 )
 
+st.subheader("📅 12-Month Breakdown")
+
+all_months = [
+    f"{selected_year}-{month:02d}"
+    for month in range(1, 13)
+]
+
+monthly_summary = (
+    yearly_monthly_data
+    .pivot(
+        index="Month",
+        columns="Type",
+        values="Amount",
+    )
+    .reindex(all_months)
+    .fillna(0)
+    .reset_index()
+)
+
+if "Income" not in monthly_summary.columns:
+    monthly_summary["Income"] = 0
+
+if "Expense" not in monthly_summary.columns:
+    monthly_summary["Expense"] = 0
+
+monthly_summary["Net Balance"] = (
+    monthly_summary["Income"]
+    - monthly_summary["Expense"]
+)
+
 monthly_summary = monthly_summary[
     [
         "Month",
