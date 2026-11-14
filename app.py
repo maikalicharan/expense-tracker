@@ -77,6 +77,21 @@ selected_year = st.selectbox(
     available_years,
 )
 
+month_names = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
+
 # Monthly income and expense data
 
 year_df = df[df["Year"] == selected_year]
