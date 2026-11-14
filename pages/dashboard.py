@@ -4,6 +4,7 @@ import plotly.express as px
 
 from utils.data import load_expenses
 from utils.calculations import calculate_summary
+from utils.sheets import get_google_sheet
 
 
 # =========================================================
