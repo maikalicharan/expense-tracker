@@ -17,7 +17,10 @@ st.title("💰 Expense Tracker")
 st.caption("Your personal finance dashboard")
 
 
-# Load data from Google Sheets
+# ============================================================
+# LOAD DATA
+# ============================================================
+
 try:
     df = load_expenses()
     summary = calculate_summary(df)
@@ -28,14 +31,20 @@ except Exception as e:
     st.stop()
 
 
-# Summary values
+# ============================================================
+# SUMMARY VALUES
+# ============================================================
+
 total_income = summary["total_income"]
 total_expenses = summary["total_expenses"]
 balance = summary["balance"]
 savings_percentage = summary["savings_percentage"]
 
 
-# Dashboard cards
+# ============================================================
+# DASHBOARD SUMMARY CARDS
+# ============================================================
+
 col1, col2 = st.columns(2)
 
 with col1:
@@ -65,18 +74,37 @@ with col4:
         f"{savings_percentage:,.2f}%",
     )
 
+
 st.divider()
 
-# Dashboard year filter
+
+# ============================================================
+# YEAR FILTER
+# ============================================================
+
 available_years = sorted(
-    df["Year"].dropna().astype(int).unique().tolist(),
+    df["Year"]
+    .dropna()
+    .astype(int)
+    .unique()
+    .tolist(),
     reverse=True,
 )
+
+if not available_years:
+    st.warning("No transaction data available.")
+    st.stop()
+
 
 selected_year = st.selectbox(
     "📅 Year",
     available_years,
 )
+
+
+# ============================================================
+# MONTH NAMES
+# ============================================================
 
 month_names = [
     "January",
@@ -93,13 +121,25 @@ month_names = [
     "December",
 ]
 
-# Monthly income and expense data
 
-year_df = df[df["Year"] == selected_year]
+# ============================================================
+# YEAR FILTERED DATA
+# ============================================================
+
+year_df = df[df["Year"] == selected_year].copy()
+
 filtered_df = year_df.copy()
 
+
+# ============================================================
+# MONTH FILTER
+# ============================================================
+
 available_months = sorted(
-    filtered_df["Month"].dropna().unique().tolist()
+    filtered_df["Month"]
+    .dropna()
+    .unique()
+    .tolist()
 )
 
 month_display = {
@@ -110,14 +150,18 @@ month_display = {
 month_options = [
     month_display[month]
     for month in available_months
+    if month in month_display
 ]
+
 
 selected_month = st.selectbox(
     "📅 Month",
     ["All Months"] + month_options,
 )
 
+
 if selected_month != "All Months":
+
     selected_month_number = (
         month_names.index(selected_month) + 1
     )
@@ -131,12 +175,17 @@ if selected_month != "All Months":
     ]
 
 
-# 12-month breakdown for selected year
+# ============================================================
+# 12-MONTH BREAKDOWN FOR SELECTED YEAR
+# ============================================================
+
 yearly_monthly_data = (
-    year_df.groupby(["Month", "Type"])["Amount"]
+    year_df
+    .groupby(["Month", "Type"])["Amount"]
     .sum()
     .reset_index()
 )
+
 
 yearly_monthly_data["Amount"] = yearly_monthly_data.apply(
     lambda row: (
@@ -146,26 +195,13 @@ yearly_monthly_data["Amount"] = yearly_monthly_data.apply(
     ),
     axis=1,
 )
-    
-monthly_data = (
-    filtered_df.groupby(["Month", "Type"])["Amount"]
-    .sum()
-    .reset_index()
-)
 
-monthly_data["Amount"] = monthly_data.apply(
-    lambda row: (
-        abs(row["Amount"])
-        if row["Type"] == "Expense"
-        else row["Amount"]
-    ),
-    axis=1,
-)
 
 all_months = [
     f"{selected_year}-{month:02d}"
     for month in range(1, 13)
 ]
+
 
 monthly_summary = (
     yearly_monthly_data
@@ -179,20 +215,20 @@ monthly_summary = (
     .reset_index()
 )
 
-monthly_summary["Month"] = monthly_summary["Month"].map(
-    month_display
-)
 
 if "Income" not in monthly_summary.columns:
     monthly_summary["Income"] = 0
 
+
 if "Expense" not in monthly_summary.columns:
     monthly_summary["Expense"] = 0
+
 
 monthly_summary["Net Balance"] = (
     monthly_summary["Income"]
     - monthly_summary["Expense"]
 )
+
 
 monthly_summary = monthly_summary[
     [
@@ -203,9 +239,20 @@ monthly_summary = monthly_summary[
     ]
 ]
 
+
+monthly_summary["Month"] = monthly_summary["Month"].map(
+    month_display
+)
+
+
 year_total_income = monthly_summary["Income"].sum()
 year_total_expense = monthly_summary["Expense"].sum()
 year_net_balance = monthly_summary["Net Balance"].sum()
+
+
+# ============================================================
+# YEAR SUMMARY
+# ============================================================
 
 col1, col2, col3 = st.columns(3)
 
@@ -227,15 +274,17 @@ with col3:
         f"₹{year_net_balance:,.2f}",
     )
 
-monthly_order = month_names
+
+# Keep January → December order
 
 monthly_summary["Month"] = pd.Categorical(
     monthly_summary["Month"],
-    categories=monthly_order,
+    categories=month_names,
     ordered=True,
 )
 
 monthly_summary = monthly_summary.sort_values("Month")
+
 
 st.dataframe(
     monthly_summary,
@@ -243,36 +292,64 @@ st.dataframe(
     hide_index=True,
 )
 
+
+# ============================================================
+# MONTHLY INCOME VS EXPENSES
+# ============================================================
+
 st.subheader("📈 Monthly Income vs Expenses")
 
-# Category-wise expense data
-category_expenses = (
-    filtered_df[filtered_df["Type"] == "Expense"]
-    .groupby("Category")["Expense Amount"]
+
+monthly_data = (
+    filtered_df
+    .groupby(["Month", "Type"])["Amount"]
     .sum()
     .reset_index()
 )
 
-monthly_chart = px.line(
-    monthly_data,
-    x="Month",
-    y="Amount",
-    color="Type",
-    markers=True,
+
+monthly_data["Amount"] = monthly_data.apply(
+    lambda row: (
+        abs(row["Amount"])
+        if row["Type"] == "Expense"
+        else row["Amount"]
+    ),
+    axis=1,
 )
 
-monthly_chart.update_layout(
-    xaxis_title="Month",
-    yaxis_title="Amount (₹)",
-    legend_title="",
-)
 
-st.plotly_chart(
-    monthly_chart,
-    use_container_width=True,
-)
+if not monthly_data.empty:
+
+    monthly_chart = px.line(
+        monthly_data,
+        x="Month",
+        y="Amount",
+        color="Type",
+        markers=True,
+    )
+
+    monthly_chart.update_layout(
+        xaxis_title="Month",
+        yaxis_title="Amount (₹)",
+        legend_title="",
+    )
+
+    st.plotly_chart(
+        monthly_chart,
+        use_container_width=True,
+    )
+
+else:
+
+    st.info("No monthly transaction data available.")
+
+
+# ============================================================
+# CATEGORY BREAKDOWN
+# ============================================================
 
 st.subheader("📂 Category Breakdown")
+
 
 category_breakdown = (
     filtered_df
@@ -284,10 +361,12 @@ category_breakdown = (
     .reset_index()
 )
 
+
 category_breakdown["Net"] = (
     category_breakdown["Earned"]
     - category_breakdown["Spent"]
 )
+
 
 category_breakdown = category_breakdown[
     [
@@ -298,11 +377,23 @@ category_breakdown = category_breakdown[
     ]
 ]
 
-st.dataframe(
-    category_breakdown,
-    use_container_width=True,
-    hide_index=True,
-)
+
+if category_breakdown.empty:
+
+    st.info("No category data available.")
+
+else:
+
+    st.dataframe(
+        category_breakdown,
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
+# ============================================================
+# CATEGORY FILTER
+# ============================================================
 
 available_categories = sorted(
     filtered_df["Category"]
@@ -312,95 +403,150 @@ available_categories = sorted(
     .tolist()
 )
 
+
 selected_category = st.selectbox(
     "📂 Category",
     ["All Categories"] + available_categories,
 )
 
+
+category_transactions = filtered_df.copy()
+
+
 if selected_category != "All Categories":
+
     st.caption(
         f"Showing transactions for: **{selected_category}**"
     )
 
-category_transactions = filtered_df.copy()
-
-if selected_category != "All Categories":
     category_transactions = category_transactions[
-        category_transactions["Category"] == selected_category
+        category_transactions["Category"]
+        == selected_category
     ]
+
+
+# ============================================================
+# TRANSACTIONS
+# ============================================================
 
 st.subheader("🧾 Transactions")
 
+
 if category_transactions.empty:
-    st.info("No transactions found for this selection.")
+
+    st.info(
+        "No transactions found for this selection."
+    )
 
 else:
+
+    transaction_columns = [
+        "Date",
+        "Description",
+        "Category",
+        "Amount",
+        "Type",
+        "Paid to or received from",
+    ]
+
     st.dataframe(
-        category_transactions[
-            [
-                "Date",
-                "Description",
-                "Category",
-                "Amount",
-                "Type",
-                "Paid to or received from",
-            ]
-        ],
+        category_transactions[transaction_columns],
         use_container_width=True,
         hide_index=True,
     )
 
 
+# ============================================================
+# EXPENSES BY CATEGORY
+# ============================================================
+
 st.subheader("🍕 Expenses by Category")
 
+
+category_expenses = (
+    filtered_df[
+        filtered_df["Type"] == "Expense"
+    ]
+    .groupby("Category")["Expense Amount"]
+    .sum()
+    .reset_index()
+)
+
+
 category_total = category_expenses["Expense Amount"].sum()
+
 
 st.metric(
     "💸 Total Expenses for Selection",
     f"₹{category_total:,.2f}",
 )
 
-category_chart = px.pie(
-    category_expenses,
-    names="Category",
-    values="Expense Amount",
-    hole=0.4,
-)
 
-category_chart.update_traces(
-    textinfo="label+percent",
-    hovertemplate="<b>%{label}</b><br>₹%{value:,.2f}<extra></extra>",
-)
+if category_expenses.empty:
 
-category_chart.update_layout(
-    legend_title="Category",
-)
+    st.info(
+        "No expense data available for this selection."
+    )
 
-st.plotly_chart(
-    category_chart,
-    use_container_width=True,
-)
+else:
+
+    category_chart = px.pie(
+        category_expenses,
+        names="Category",
+        values="Expense Amount",
+        hole=0.4,
+    )
+
+    category_chart.update_traces(
+        textinfo="label+percent",
+        hovertemplate=(
+            "<b>%{label}</b>"
+            "<br>₹%{value:,.2f}"
+            "<extra></extra>"
+        ),
+    )
+
+    category_chart.update_layout(
+        legend_title="Category",
+    )
+
+    st.plotly_chart(
+        category_chart,
+        use_container_width=True,
+    )
+
+
+# ============================================================
+# RECENT TRANSACTIONS
+# ============================================================
 
 st.divider()
 
 st.subheader("Recent Transactions")
 
-# Show the latest 10 transactions
-recent_transactions = df.sort_values(
+
+recent_transactions = (
+    df.sort_values(
+        "Date",
+        ascending=False,
+    )
+    .head(10)
+)
+
+
+recent_transaction_columns = [
     "Date",
-    ascending=False,
-).head(10)
+    "Description",
+    "Category",
+    "Amount",
+    "Type",
+    "Paid to or received from",
+]
+
 
 st.dataframe(
     recent_transactions[
-        [
-            "Date",
-            "Description",
-            "Category",
-            "Amount",
-            "Type",
-            "Paid to or received from",
-        ]
+        recent_transaction_columns
     ],
     use_container_width=True,
     hide_index=True,
