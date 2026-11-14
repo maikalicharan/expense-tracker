@@ -179,102 +179,187 @@ st.markdown(
 st.subheader("Financial Overview")
 
 
+st.markdown(
+    """
+    <style>
+
+    /* Dashboard metric cards */
+
+    [data-testid="stMetric"] {
+        background: #ffffff;
+        border: 1px solid #e1e5ec;
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        min-height: 105px;
+        box-shadow: 0 2px 8px rgba(20, 25, 40, 0.04);
+    }
+
+    [data-testid="stMetricLabel"] {
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        color: #606776 !important;
+    }
+
+    [data-testid="stMetricValue"] {
+        font-size: 1.4rem !important;
+        font-weight: 750 !important;
+        color: #252a34 !important;
+    }
+
+    /* Income */
+
+    .income-metric [data-testid="stMetric"] {
+        background: #eef9f2;
+        border-left: 4px solid #35a765;
+    }
+
+    .income-metric [data-testid="stMetricLabel"] {
+        color: #26794a !important;
+    }
+
+    .income-metric [data-testid="stMetricValue"] {
+        color: #176b3b !important;
+    }
+
+
+    /* Expense */
+
+    .expense-metric [data-testid="stMetric"] {
+        background: #fff3f2;
+        border-left: 4px solid #df625d;
+    }
+
+    .expense-metric [data-testid="stMetricLabel"] {
+        color: #a44845 !important;
+    }
+
+    .expense-metric [data-testid="stMetricValue"] {
+        color: #a52f2f !important;
+    }
+
+
+    /* Balance */
+
+    .balance-metric [data-testid="stMetric"] {
+        background: #eef5ff;
+        border-left: 4px solid #4b82d5;
+    }
+
+    .balance-metric [data-testid="stMetricLabel"] {
+        color: #315f9f !important;
+    }
+
+    .balance-metric [data-testid="stMetricValue"] {
+        color: #245ca8 !important;
+    }
+
+
+    /* Savings */
+
+    .savings-metric [data-testid="stMetric"] {
+        background: #f5f0ff;
+        border-left: 4px solid #8060c9;
+    }
+
+    .savings-metric [data-testid="stMetricLabel"] {
+        color: #6540a8 !important;
+    }
+
+    .savings-metric [data-testid="stMetricValue"] {
+        color: #5834a0 !important;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 col1, col2, col3, col4 = st.columns(4)
 
 
 with col1:
+
     st.markdown(
-        f"""
-        <div class="dashboard-card dashboard-card-income">
+        '<div class="income-metric">',
+        unsafe_allow_html=True,
+    )
 
-            <div class="dashboard-card-label">
-                Total Income
-            </div>
+    st.metric(
+        "Total Income",
+        f"₹{total_income:,.2f}",
+    )
 
-            <div class="dashboard-card-value">
-                ₹{total_income:,.2f}
-            </div>
-
-        </div>
-        """,
+    st.markdown(
+        "</div>",
         unsafe_allow_html=True,
     )
 
 
 with col2:
+
     st.markdown(
-        f"""
-        <div class="dashboard-card dashboard-card-expense">
+        '<div class="expense-metric">',
+        unsafe_allow_html=True,
+    )
 
-            <div class="dashboard-card-label">
-                Total Expenses
-            </div>
+    st.metric(
+        "Total Expenses",
+        f"₹{total_expenses:,.2f}",
+    )
 
-            <div class="dashboard-card-value">
-                ₹{total_expenses:,.2f}
-            </div>
-
-        </div>
-        """,
+    st.markdown(
+        "</div>",
         unsafe_allow_html=True,
     )
 
 
 with col3:
-    balance_class = (
-        "dashboard-card-income"
-        if balance >= 0
-        else "dashboard-card-expense"
+
+    if balance >= 0:
+        balance_class = "balance-metric"
+        balance_label = "Current Balance"
+    else:
+        balance_class = "expense-metric"
+        balance_label = "Negative Balance"
+
+    st.markdown(
+        f'<div class="{balance_class}">',
+        unsafe_allow_html=True,
     )
 
-    balance_label = (
-        "Current Balance"
-        if balance >= 0
-        else "Negative Balance"
+    st.metric(
+        balance_label,
+        f"₹{balance:,.2f}",
     )
 
     st.markdown(
-        f"""
-        <div class="dashboard-card {balance_class}">
-
-            <div class="dashboard-card-label">
-                {balance_label}
-            </div>
-
-            <div class="dashboard-card-value">
-                ₹{balance:,.2f}
-            </div>
-
-        </div>
-        """,
+        "</div>",
         unsafe_allow_html=True,
     )
 
 
 with col4:
-    savings_class = (
-        "dashboard-card-income"
-        if savings_percentage >= 20
-        else "dashboard-card-savings"
-    )
+
+    if savings_percentage >= 20:
+        savings_class = "income-metric"
+    else:
+        savings_class = "savings-metric"
 
     st.markdown(
-        f"""
-        <div class="dashboard-card {savings_class}">
-
-            <div class="dashboard-card-label">
-                Savings Rate
-            </div>
-
-            <div class="dashboard-card-value">
-                {savings_percentage:.1f}%
-            </div>
-
-        </div>
-        """,
+        f'<div class="{savings_class}">',
         unsafe_allow_html=True,
     )
 
+    st.metric(
+        "Savings Rate",
+        f"{savings_percentage:.1f}%",
+    )
+
+    st.markdown(
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
 # =========================================================
 # MONTHLY OVERVIEW
