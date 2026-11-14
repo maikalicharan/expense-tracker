@@ -603,7 +603,7 @@ if total_income <= 0:
         "tracking your savings and financial health."
     )
 
-    insight_class = "dashboard-card-expense"
+    insight_type = "warning"
 
 
 elif balance < 0:
@@ -616,7 +616,7 @@ elif balance < 0:
         "a structured budget."
     )
 
-    insight_class = "dashboard-card-expense"
+    insight_type = "error"
 
 
 elif savings_percentage >= 30:
@@ -628,7 +628,7 @@ elif savings_percentage >= 30:
         "Continue building your long-term financial goals."
     )
 
-    insight_class = "dashboard-card-income"
+    insight_type = "success"
 
 
 elif savings_percentage >= 20:
@@ -641,10 +641,10 @@ elif savings_percentage >= 20:
         "increase savings where possible."
     )
 
-    insight_class = "dashboard-card-balance"
+    insight_type = "info"
 
 
-elif savings_percentage >= 0:
+else:
 
     insight_title = "Room to Improve"
 
@@ -654,17 +654,35 @@ elif savings_percentage >= 0:
         "set a structured budget."
     )
 
-    insight_class = "dashboard-card-savings"
+    insight_type = "info"
 
+
+if insight_type == "success":
+
+    st.success(
+        f"**{insight_title}**\n\n"
+        f"{insight_text}"
+    )
+
+elif insight_type == "error":
+
+    st.error(
+        f"**{insight_title}**\n\n"
+        f"{insight_text}"
+    )
+
+elif insight_type == "warning":
+
+    st.warning(
+        f"**{insight_title}**\n\n"
+        f"{insight_text}"
+    )
 
 else:
 
-    insight_title = "Review Your Spending"
-
-    insight_text = (
-        "Your expenses are currently higher than your income. "
-        "Review Account History and identify areas where "
-        "spending can be reduced."
+    st.info(
+        f"**{insight_title}**\n\n"
+        f"{insight_text}"
     )
 
     insight_class = "dashboard-card-expense"
