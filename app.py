@@ -337,6 +337,11 @@ selected_category = st.selectbox(
     ["All Categories"] + available_categories,
 )
 
+if selected_category != "All Categories":
+    st.caption(
+        f"Showing transactions for: **{selected_category}**"
+    )
+
 category_transactions = filtered_df.copy()
 
 if selected_category != "All Categories":
