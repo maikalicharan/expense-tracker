@@ -81,6 +81,8 @@ selected_year = st.selectbox(
 
 year_df = df[df["Year"] == selected_year]
 filtered_df = year_df.copy()
+
+available_months = sorted(
     filtered_df["Month"].dropna().unique().tolist()
 )
 selected_month = st.selectbox(
