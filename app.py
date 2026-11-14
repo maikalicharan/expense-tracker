@@ -304,6 +304,18 @@ category_breakdown = (
     .reset_index()
 )
 
+st.subheader("📂 Category Breakdown")
+
+category_breakdown = (
+    filtered_df
+    .groupby("Category")
+    .agg(
+        Spent=("Expense Amount", "sum"),
+        Earned=("Amount", lambda x: x[x > 0].sum()),
+    )
+    .reset_index()
+)
+
 category_breakdown["Net"] = (
     category_breakdown["Earned"]
     - category_breakdown["Spent"]
@@ -317,7 +329,6 @@ category_breakdown = category_breakdown[
         "Net",
     ]
 ]
-)
 
 st.dataframe(
     category_breakdown,
