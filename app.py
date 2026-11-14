@@ -246,6 +246,16 @@ with col3:
         f"₹{year_net_balance:,.2f}",
     )
 
+monthly_order = month_names
+
+monthly_summary["Month"] = pd.Categorical(
+    monthly_summary["Month"],
+    categories=monthly_order,
+    ordered=True,
+)
+
+monthly_summary = monthly_summary.sort_values("Month")
+
 st.dataframe(
     monthly_summary,
     use_container_width=True,
