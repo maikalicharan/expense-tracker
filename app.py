@@ -288,6 +288,13 @@ selected_category = st.selectbox(
     ["All Categories"] + available_categories,
 )
 
+category_transactions = filtered_df.copy()
+
+if selected_category != "All Categories":
+    category_transactions = category_transactions[
+        category_transactions["Category"] == selected_category
+    ]
+
 st.subheader("🍕 Expenses by Category")
 
 category_total = category_expenses["Expense Amount"].sum()
