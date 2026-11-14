@@ -16,9 +16,9 @@ st.title("Transactions")
 st.caption("Search, edit and manage your transactions")
 
 
-# --------------------------------------------------
+# ==================================================
 # LOAD DATA
-# --------------------------------------------------
+# ==================================================
 
 try:
 
@@ -42,9 +42,9 @@ if df.empty:
     st.stop()
 
 
-# --------------------------------------------------
+# ==================================================
 # FILTERS
-# --------------------------------------------------
+# ==================================================
 
 st.subheader("Filters")
 
@@ -61,7 +61,7 @@ with col1:
 
 with col2:
 
-    transaction_type = st.selectbox(
+    transaction_type_filter = st.selectbox(
         "Type",
         [
             "All",
@@ -101,13 +101,14 @@ with col4:
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # APPLY FILTERS
-# --------------------------------------------------
+# ==================================================
 
 filtered_df = df.copy()
 
 
+# Date filter
 if len(date_range) == 2:
 
     start_date, end_date = date_range
@@ -125,6 +126,7 @@ if len(date_range) == 2:
     ]
 
 
+# Search filter
 if search_text.strip():
 
     search_value = search_text.strip()
@@ -158,14 +160,16 @@ if search_text.strip():
     ]
 
 
-if transaction_type != "All":
+# Type filter
+if transaction_type_filter != "All":
 
     filtered_df = filtered_df[
         filtered_df["Type"]
-        == transaction_type
+        == transaction_type_filter
     ]
 
 
+# Category filter
 if selected_category != "All":
 
     filtered_df = filtered_df[
@@ -174,9 +178,9 @@ if selected_category != "All":
     ]
 
 
-# --------------------------------------------------
+# ==================================================
 # SUMMARY
-# --------------------------------------------------
+# ==================================================
 
 st.divider()
 
@@ -217,23 +221,29 @@ with col3:
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # EXPORT
-# --------------------------------------------------
+# ==================================================
 
 st.divider()
 
 st.subheader("Export Transactions")
 
 
-export_df = filtered_df.sort_values(
-    "Date",
-    ascending=False,
-).copy()
+export_df = (
+    filtered_df
+    .sort_values(
+        "Date",
+        ascending=False,
+    )
+    .copy()
+)
 
 
-# Show positive amounts in exported file
-export_df["Amount"] = export_df["Amount"].abs()
+# Always show positive amount to user
+export_df["Amount"] = (
+    export_df["Amount"].abs()
+)
 
 
 export_df["Date"] = (
@@ -264,7 +274,6 @@ with col1:
         index=False
     ).encode("utf-8")
 
-
     st.download_button(
         label="Download CSV",
         data=csv_data,
@@ -278,7 +287,6 @@ with col2:
 
     excel_buffer = io.BytesIO()
 
-
     with pd.ExcelWriter(
         excel_buffer,
         engine="openpyxl",
@@ -290,9 +298,7 @@ with col2:
             sheet_name="Transactions",
         )
 
-
     excel_buffer.seek(0)
-
 
     st.download_button(
         label="Download Excel",
@@ -306,9 +312,9 @@ with col2:
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # EDIT TRANSACTIONS
-# --------------------------------------------------
+# ==================================================
 
 st.divider()
 
@@ -324,56 +330,55 @@ if filtered_df.empty:
 else:
 
     st.caption(
-        "Enter amounts as positive numbers. "
-        "The transaction Type determines whether the "
-        "amount is stored as income or expense."
+        "Amount is always entered as a positive value. "
+        "Select Income or Expense to determine how it "
+        "is stored internally."
     )
 
 
-    editable_df = filtered_df.sort_values(
-        "Date",
-        ascending=False,
-    ).copy()
+    # --------------------------------------------------
+    # SORT DATA
+    # --------------------------------------------------
 
-
-    editable_df["Date"] = (
-        editable_df["Date"]
-        .dt.strftime("%d/%m/%Y")
-    )
-
-
-    # ----------------------------------------------
-    # KEEP ORIGINAL TYPE FOR SAVE LOGIC
-    # ----------------------------------------------
-
-    editable_df["Original Type"] = (
+    editable_source_df = (
         filtered_df
         .sort_values(
             "Date",
             ascending=False,
-        )["Type"]
-        .values
+        )
+        .copy()
     )
 
 
-    # Display amount as positive
-    editable_df["Amount"] = (
-        editable_df["Amount"]
-        .abs()
-    )
+    # --------------------------------------------------
+    # CREATE USER-FACING EDIT TABLE
+    # --------------------------------------------------
 
-
-    editable_df = editable_df[
+    editable_df = editable_source_df[
         [
             "ID",
             "Date",
             "Description",
             "Category",
             "Amount",
-            "Original Type",
+            "Type",
             "Paid to or received from",
         ]
     ].copy()
+
+
+    # Date shown as DD/MM/YYYY
+    editable_df["Date"] = (
+        editable_df["Date"]
+        .dt.strftime("%d/%m/%Y")
+    )
+
+
+    # Amount shown without negative sign
+    editable_df["Amount"] = (
+        editable_df["Amount"]
+        .abs()
+    )
 
 
     edited_df = st.data_editor(
@@ -381,10 +386,11 @@ else:
         use_container_width=True,
         hide_index=True,
         num_rows="fixed",
+
         disabled=[
             "ID",
-            "Original Type",
         ],
+
         column_config={
 
             "ID": st.column_config.NumberColumn(
@@ -413,11 +419,11 @@ else:
 
             "Type": st.column_config.SelectboxColumn(
                 "Type",
-                   options=[
+                options=[
                     "Income",
                     "Expense",
-                  ],
-                    required=True,
+                ],
+                required=True,
             ),
 
             "Paid to or received from":
@@ -430,9 +436,9 @@ else:
     )
 
 
-    # --------------------------------------------------
+    # ==================================================
     # SAVE CHANGES
-    # --------------------------------------------------
+    # ==================================================
 
     if st.button(
         "Save Changes",
@@ -443,18 +449,24 @@ else:
         try:
 
             original_df = (
-                editable_df
+                editable_source_df
                 .reset_index(drop=True)
+                .copy()
             )
 
             changed_df = (
                 edited_df
                 .reset_index(drop=True)
+                .copy()
             )
 
 
             changes_made = 0
 
+
+            # --------------------------------------------------
+            # PROCESS EACH ROW
+            # --------------------------------------------------
 
             for index in range(
                 len(changed_df)
@@ -469,9 +481,9 @@ else:
                 )
 
 
-                # --------------------------------------
-                # TRANSACTION ID
-                # --------------------------------------
+                # ----------------------------------------------
+                # ID
+                # ----------------------------------------------
 
                 try:
 
@@ -493,9 +505,9 @@ else:
                     st.stop()
 
 
-                # --------------------------------------
+                # ----------------------------------------------
                 # DATE
-                # --------------------------------------
+                # ----------------------------------------------
 
                 date_text = str(
                     changed_row["Date"]
@@ -521,9 +533,25 @@ else:
                     st.stop()
 
 
-                # --------------------------------------
+                new_date = (
+                    validated_date.strftime(
+                        "%d/%m/%Y"
+                    )
+                )
+
+
+                # ----------------------------------------------
+                # DESCRIPTION
+                # ----------------------------------------------
+
+                description = str(
+                    changed_row["Description"]
+                ).strip()
+
+
+                # ----------------------------------------------
                 # CATEGORY
-                # --------------------------------------
+                # ----------------------------------------------
 
                 category = str(
                     changed_row["Category"]
@@ -540,9 +568,9 @@ else:
                     st.stop()
 
 
-                # --------------------------------------
+                # ----------------------------------------------
                 # AMOUNT
-                # --------------------------------------
+                # ----------------------------------------------
 
                 try:
 
@@ -573,16 +601,33 @@ else:
                     st.stop()
 
 
-                # --------------------------------------
-                # CONVERT TO INTERNAL SIGN
-                # --------------------------------------
+                # ----------------------------------------------
+                # TYPE
+                # ----------------------------------------------
 
-                transaction_type = str(
-                    changed_row["Original Type"]
-                )
+                new_type = str(
+                    changed_row["Type"]
+                ).strip()
 
 
-                if transaction_type == "Income":
+                if new_type not in [
+                    "Income",
+                    "Expense",
+                ]:
+
+                    st.error(
+                        f"Invalid transaction type "
+                        f"for transaction #{transaction_id}."
+                    )
+
+                    st.stop()
+
+
+                # ----------------------------------------------
+                # APPLY INTERNAL SIGN
+                # ----------------------------------------------
+
+                if new_type == "Income":
 
                     final_amount = abs(
                         display_amount
@@ -595,14 +640,9 @@ else:
                     )
 
 
-                # --------------------------------------
-                # CLEAN TEXT
-                # --------------------------------------
-
-                description = str(
-                    changed_row["Description"]
-                ).strip()
-
+                # ----------------------------------------------
+                # PAID TO / RECEIVED FROM
+                # ----------------------------------------------
 
                 paid_to_received_from = str(
                     changed_row[
@@ -611,20 +651,25 @@ else:
                 ).strip()
 
 
-                # --------------------------------------
+                # ==================================================
                 # ORIGINAL VALUES
-                # --------------------------------------
+                # ==================================================
 
                 original_amount = float(
                     original_row["Amount"]
                 )
 
                 original_type = str(
-                    original_row["Original Type"]
-                )
+                    original_row["Type"]
+                ).strip()
 
-                original_date = str(
+                original_date = (
                     original_row["Date"]
+                    .strftime("%d/%m/%Y")
+                    if pd.notna(
+                        original_row["Date"]
+                    )
+                    else ""
                 )
 
                 original_description = str(
@@ -642,35 +687,25 @@ else:
                 ).strip()
 
 
-                # --------------------------------------
-                # CHECK CHANGES
-                # --------------------------------------
-
-                original_signed_amount = (
-                    abs(original_amount)
-                    if original_type == "Income"
-                    else -abs(original_amount)
-                )
-
-
-                new_date = (
-                    validated_date.strftime(
-                        "%d/%m/%Y"
-                    )
-                )
-
+                # ==================================================
+                # CHECK WHETHER ANYTHING CHANGED
+                # ==================================================
 
                 if (
-                    original_date == new_date
-                    and
-                    original_signed_amount
-                    == final_amount
+                    original_date
+                    == new_date
                     and
                     original_description
                     == description
                     and
                     original_category
                     == category
+                    and
+                    original_amount
+                    == final_amount
+                    and
+                    original_type
+                    == new_type
                     and
                     original_person
                     == paid_to_received_from
@@ -679,9 +714,9 @@ else:
                     continue
 
 
-                # --------------------------------------
-                # FIND SHEET ROW
-                # --------------------------------------
+                # ==================================================
+                # FIND GOOGLE SHEET ROW
+                # ==================================================
 
                 records = (
                     worksheet.get_all_records()
@@ -695,12 +730,15 @@ else:
                     start=2,
                 ):
 
-                    if str(
+                    sheet_id = str(
                         record.get(
                             "ID",
                             "",
                         )
-                    ).strip() == str(
+                    ).strip()
+
+
+                    if sheet_id == str(
                         transaction_id
                     ).strip():
 
@@ -715,15 +753,15 @@ else:
 
                     st.error(
                         f"Transaction #{transaction_id} "
-                        "could not be found."
+                        "could not be found in Google Sheets."
                     )
 
                     st.stop()
 
 
-                # --------------------------------------
-                # UPDATE SHEET
-                # --------------------------------------
+                # ==================================================
+                # UPDATE GOOGLE SHEET
+                # ==================================================
 
                 worksheet.update(
                     f"A{sheet_row_number}:F{sheet_row_number}",
@@ -741,7 +779,14 @@ else:
                 changes_made += 1
 
 
+            # ==================================================
+            # SAVE RESULT
+            # ==================================================
+
             if changes_made > 0:
+
+                # Clear cached transaction data
+                load_expenses.clear()
 
                 st.success(
                     f"{changes_made} transaction(s) "
@@ -767,9 +812,9 @@ else:
             st.exception(e)
 
 
-# --------------------------------------------------
+# ==================================================
 # DELETE TRANSACTION
-# --------------------------------------------------
+# ==================================================
 
 st.divider()
 
@@ -800,13 +845,15 @@ else:
     )
 
 
+    # User-friendly delete label
     delete_options["Delete Label"] = (
         delete_options.apply(
             lambda row: (
                 f"#{int(row['ID'])} | "
                 f"{row['Date'].strftime('%d/%m/%Y')} | "
                 f"{row['Description'] or 'No description'} | "
-                f"₹{abs(row['Amount']):,.2f}"
+                f"₹{abs(row['Amount']):,.2f} | "
+                f"{row['Type']}"
             ),
             axis=1,
         )
@@ -890,13 +937,13 @@ else:
                     sheet_row_number
                 )
 
+                load_expenses.clear()
 
                 st.success(
                     f"Transaction "
                     f"#{int(selected_delete_id)} "
                     "deleted successfully!"
                 )
-
 
                 st.rerun()
 
