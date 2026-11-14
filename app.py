@@ -35,7 +35,7 @@ st.title("💰 Account History")
 
 
 # ============================================================
-# YEAR FILTER
+# YEAR AND MONTH
 # ============================================================
 
 available_years = sorted(
@@ -51,16 +51,6 @@ if not available_years:
     st.warning("No transaction data available.")
     st.stop()
 
-
-selected_year = st.selectbox(
-    "📅 Year",
-    available_years,
-)
-
-
-# ============================================================
-# MONTH NAMES
-# ============================================================
 
 month_names = [
     "January",
@@ -78,44 +68,47 @@ month_names = [
 ]
 
 
-# ============================================================
-# YEAR DATA
-# ============================================================
+col1, col2 = st.columns(2)
 
-year_df = df[df["Year"] == selected_year].copy()
+with col1:
+    selected_year = st.selectbox(
+        "Year",
+        available_years,
+    )
 
-filtered_df = year_df.copy()
+with col2:
+
+    year_df = df[df["Year"] == selected_year].copy()
+
+    available_months = sorted(
+        year_df["Month"]
+        .dropna()
+        .unique()
+        .tolist()
+    )
+
+    month_display = {
+        f"{selected_year}-{month:02d}": month_names[month - 1]
+        for month in range(1, 13)
+    }
+
+    month_options = [
+        month_display[month]
+        for month in available_months
+        if month in month_display
+    ]
+
+    selected_month = st.selectbox(
+        "Month",
+        ["All Months"] + month_options,
+    )
 
 
 # ============================================================
 # MONTH FILTER
 # ============================================================
 
-available_months = sorted(
-    filtered_df["Month"]
-    .dropna()
-    .unique()
-    .tolist()
-)
-
-
-month_display = {
-    f"{selected_year}-{month:02d}": month_names[month - 1]
-    for month in range(1, 13)
-}
-
-
-month_options = [
-    month_display[month]
-    for month in available_months
-    if month in month_display
-]
-
-
-selected_month = st.selectbox(
-    "📅 Month",
-    ["All Months"] + month_options,
-)
+filtered_df = year_df.copy()
 
 
 if selected_month != "All Months":
@@ -154,7 +147,7 @@ st.divider()
 
 
 # ============================================================
-# SELECTED YEAR / MONTH TOTALS
+# TOTAL RECEIVED / TOTAL SPENT
 # ============================================================
 
 selected_income = (
@@ -175,13 +168,11 @@ selected_expenses = (
 
 col1, col2 = st.columns(2)
 
-
 with col1:
     st.metric(
         "💵 Total Received",
         f"₹{selected_income:,.2f}",
     )
-
 
 with col2:
     st.metric(
@@ -194,29 +185,28 @@ st.divider()
 
 
 # ============================================================
+# CATEGORY
+# ============================================================
+
+with st.expander("Category"):
+
+    available_categories = sorted(
+        filtered_df["Category"]
+        .dropna()
+        .astype(str)
+        .unique()
+        .tolist()
+    )
+
+    selected_category = st.selectbox(
+        "Select Category",
+        ["All Categories"] + available_categories,
+        label_visibility="collapsed",
+    )
+
+
+# ============================================================
 # CATEGORY FILTER
-# ============================================================
-
-st.subheader("📂 Category")
-
-
-available_categories = sorted(
-    filtered_df["Category"]
-    .dropna()
-    .astype(str)
-    .unique()
-    .tolist()
-)
-
-
-selected_category = st.selectbox(
-    "Select Category",
-    ["All Categories"] + available_categories,
-)
-
-
-# ============================================================
-# CATEGORY TRANSACTIONS
 # ============================================================
 
 category_transactions = filtered_df.copy()
@@ -229,6 +219,10 @@ if selected_category != "All Categories":
         == selected_category
     ]
 
+
+# ============================================================
+# TRANSACTIONS
+# ============================================================
 
 st.subheader("🧾 Transactions")
 
@@ -281,8 +275,6 @@ st.subheader(
     f"📊 Monthly Spending — {selected_year}"
 )
 
-
-# Calculate total expense for every month of selected year
 
 yearly_spending = (
     year_df[
