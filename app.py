@@ -295,6 +295,28 @@ if selected_category != "All Categories":
         category_transactions["Category"] == selected_category
     ]
 
+st.subheader("🧾 Transactions")
+
+if category_transactions.empty:
+    st.info("No transactions found for this selection.")
+
+else:
+    st.dataframe(
+        category_transactions[
+            [
+                "Date",
+                "Description",
+                "Category",
+                "Amount",
+                "Type",
+                "Paid to or received from",
+            ]
+        ],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+
 st.subheader("🍕 Expenses by Category")
 
 category_total = category_expenses["Expense Amount"].sum()
