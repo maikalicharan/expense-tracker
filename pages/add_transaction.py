@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 
 from utils.sheets import get_google_sheet
@@ -232,4 +231,3 @@ if submitted:
         )
 
         st.exception(e)
-```
