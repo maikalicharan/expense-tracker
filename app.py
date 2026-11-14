@@ -127,6 +127,45 @@ monthly_data["Amount"] = monthly_data.apply(
     axis=1,
 )
 
+st.subheader("📅 12-Month Breakdown")
+
+monthly_summary = (
+    yearly_monthly_data
+    .pivot(
+        index="Month",
+        columns="Type",
+        values="Amount",
+    )
+    .fillna(0)
+    .reset_index()
+)
+
+if "Income" not in monthly_summary.columns:
+    monthly_summary["Income"] = 0
+
+if "Expense" not in monthly_summary.columns:
+    monthly_summary["Expense"] = 0
+
+monthly_summary["Net Balance"] = (
+    monthly_summary["Income"]
+    - monthly_summary["Expense"]
+)
+
+monthly_summary = monthly_summary[
+    [
+        "Month",
+        "Income",
+        "Expense",
+        "Net Balance",
+    ]
+]
+
+st.dataframe(
+    monthly_summary,
+    use_container_width=True,
+    hide_index=True,
+)
+
 st.subheader("📈 Monthly Income vs Expenses")
 
 # Category-wise expense data
