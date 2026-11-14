@@ -275,6 +275,19 @@ st.dataframe(
     hide_index=True,
 )
 
+available_categories = sorted(
+    filtered_df["Category"]
+    .dropna()
+    .astype(str)
+    .unique()
+    .tolist()
+)
+
+selected_category = st.selectbox(
+    "📂 Category",
+    ["All Categories"] + available_categories,
+)
+
 st.subheader("🍕 Expenses by Category")
 
 category_total = category_expenses["Expense Amount"].sum()
