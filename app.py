@@ -222,6 +222,30 @@ monthly_summary = monthly_summary[
     ]
 ]
 
+year_total_income = monthly_summary["Income"].sum()
+year_total_expense = monthly_summary["Expense"].sum()
+year_net_balance = monthly_summary["Net Balance"].sum()
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric(
+        "💵 Year Income",
+        f"₹{year_total_income:,.2f}",
+    )
+
+with col2:
+    st.metric(
+        "💸 Year Expenses",
+        f"₹{year_total_expense:,.2f}",
+    )
+
+with col3:
+    st.metric(
+        "💰 Year Net Balance",
+        f"₹{year_net_balance:,.2f}",
+    )
+
 st.dataframe(
     monthly_summary,
     use_container_width=True,
