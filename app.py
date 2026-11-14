@@ -5,57 +5,50 @@ from utils.ui import apply_custom_css
 
 st.set_page_config(
     page_title="My Finance",
-    page_icon="💰",
     layout="wide",
 )
+
+apply_custom_css()
 
 
 dashboard = st.Page(
     "pages/dashboard.py",
     title="Dashboard",
-    icon="🏠",
 )
 
 account_history = st.Page(
     "pages/account_history.py",
     title="Account History",
-    icon="🧾",
 )
 
 add_transaction = st.Page(
     "pages/add_transaction.py",
     title="Add Transaction",
-    icon="➕",
 )
 
 transactions = st.Page(
     "pages/transactions.py",
     title="Transactions",
-    icon="💳",
 )
 
 planning = st.Page(
     "pages/planning.py",
     title="Planning",
-    icon="📊",
 )
 
 investments = st.Page(
     "pages/investments.py",
     title="Investments",
-    icon="📈",
 )
 
 calculators = st.Page(
     "pages/calculators.py",
     title="Calculators",
-    icon="🧮",
 )
 
 settings = st.Page(
     "pages/settings.py",
     title="Settings",
-    icon="⚙️",
 )
 
 
@@ -69,13 +62,9 @@ pg = st.navigation(
             add_transaction,
             transactions,
         ],
-        "Financial Planning": [
+        "Planning": [
             planning,
-        ],
-        "Investments": [
             investments,
-        ],
-        "Financial Tools": [
             calculators,
         ],
         "System": [
@@ -87,12 +76,22 @@ pg = st.navigation(
 
 with st.sidebar:
 
-    st.markdown("---")
-
-    st.caption("💰 My Finance")
+    st.markdown(
+        """
+        <div style="
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #20242d;
+            margin-bottom: 0.25rem;
+        ">
+            My Finance
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.caption(
-        "Your personal financial management tool"
+        "Personal financial management"
     )
 
 
