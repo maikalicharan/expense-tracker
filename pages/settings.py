@@ -9,17 +9,29 @@ st.caption("Manage your app preferences")
 # Appearance
 # -----------------------------
 
-st.subheader("🎨 Appearance")
+st.subheader("Appearance")
+
+
+if "theme" not in st.session_state:
+    st.session_state.theme = "Light"
 
 
 theme = st.selectbox(
-    "Preferred Theme",
-    [
-        "System Default",
-        "Light",
-        "Dark",
-    ],
+    "Theme",
+    ["Light", "Dark"],
+    index=(
+        1
+        if st.session_state.theme == "Dark"
+        else 0
+    ),
 )
+
+
+if theme != st.session_state.theme:
+
+    st.session_state.theme = theme
+
+    st.rerun()
 
 
 st.info(
