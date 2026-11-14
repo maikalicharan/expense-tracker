@@ -2,19 +2,24 @@ import streamlit as st
 import pandas as pd
 
 from utils.data import load_expenses
+from utils.sheets import get_google_sheet
 
 
-# =========================================================
-# PAGE
-# =========================================================
+st.set_page_config(
+    page_title="Financial Health",
+    layout="wide",
+)
+
 
 st.title("Financial Health")
-st.caption("Understand your overall financial position")
+st.caption(
+    "Understand your income, spending, savings and financial goals"
+)
 
 
-# =========================================================
-# LOAD DATA
-# =========================================================
+# ==================================================
+# LOAD TRANSACTION DATA
+# ==================================================
 
 try:
 
@@ -37,27 +42,28 @@ if df.empty:
     st.stop()
 
 
-# =========================================================
-# CLEAN DATA
-# =========================================================
-
 df = df.copy()
 
 df = df.dropna(
     subset=["Date"]
 )
 
-df["Year"] = df["Date"].dt.year
+
+# ==================================================
+# YEAR DATA
+# ==================================================
+
+df["Year"] = (
+    df["Date"]
+    .dt.year
+)
+
 
 df["Month Period"] = (
     df["Date"]
     .dt.to_period("M")
 )
 
-
-# =========================================================
-# YEAR SELECTION
-# =========================================================
 
 available_years = sorted(
     df["Year"]
@@ -89,9 +95,9 @@ if year_df.empty:
     st.stop()
 
 
-# =========================================================
-# BASIC FINANCIAL VALUES
-# =========================================================
+# ==================================================
+# BASIC FINANCIAL CALCULATIONS
+# ==================================================
 
 total_income = year_df.loc[
     year_df["Type"] == "Income",
@@ -111,10 +117,6 @@ net_savings = (
 )
 
 
-# =========================================================
-# RATIOS
-# =========================================================
-
 if total_income > 0:
 
     savings_rate = (
@@ -130,19 +132,20 @@ if total_income > 0:
 else:
 
     savings_rate = 0
-
     expense_ratio = 0
 
 
-# =========================================================
+# ==================================================
 # MONTHLY ANALYSIS
-# =========================================================
+# ==================================================
 
 monthly_income = (
     year_df[
         year_df["Type"] == "Income"
     ]
-    .groupby("Month Period")["Amount"]
+    .groupby("Month Period")[
+        "Amount"
+    ]
     .sum()
 )
 
@@ -151,7 +154,9 @@ monthly_expenses = (
     year_df[
         year_df["Type"] == "Expense"
     ]
-    .groupby("Month Period")["Expense Amount"]
+    .groupby("Month Period")[
+        "Expense Amount"
+    ]
     .sum()
 )
 
@@ -192,9 +197,7 @@ if number_of_months > 0:
 else:
 
     average_monthly_income = 0
-
     average_monthly_expenses = 0
-
     average_monthly_savings = 0
 
 
@@ -213,9 +216,9 @@ zero_months = (
 ).sum()
 
 
-# =========================================================
-# HEADER
-# =========================================================
+# ==================================================
+# FINANCIAL OVERVIEW
+# ==================================================
 
 st.divider()
 
@@ -257,9 +260,9 @@ with col4:
     )
 
 
-# =========================================================
+# ==================================================
 # MONTHLY AVERAGES
-# =========================================================
+# ==================================================
 
 st.divider()
 
@@ -293,9 +296,9 @@ with col3:
     )
 
 
-# =========================================================
+# ==================================================
 # FINANCIAL STABILITY
-# =========================================================
+# ==================================================
 
 st.divider()
 
@@ -311,7 +314,6 @@ if total_income <= 0:
         "your financial stability."
     )
 
-
 elif net_savings < 0:
 
     stability = "Needs Attention"
@@ -320,7 +322,6 @@ elif net_savings < 0:
         "Your expenses are higher than your income "
         "for the selected year."
     )
-
 
 elif savings_rate >= 30:
 
@@ -331,7 +332,6 @@ elif savings_rate >= 30:
         "relative to your income."
     )
 
-
 elif savings_rate >= 20:
 
     stability = "Good"
@@ -341,7 +341,6 @@ elif savings_rate >= 20:
         "Continue monitoring your spending."
     )
 
-
 elif savings_rate >= 10:
 
     stability = "Moderate"
@@ -350,7 +349,6 @@ elif savings_rate >= 10:
         "You are saving money, but there is room "
         "to improve your savings rate."
     )
-
 
 else:
 
@@ -387,19 +385,344 @@ else:
     )
 
 
-# =========================================================
+# ==================================================
+# GOALS ANALYSIS
+# ==================================================
+
+st.divider()
+
+st.subheader("Goals Progress")
+
+
+try:
+
+    spreadsheet = get_google_sheet().spreadsheet
+
+    try:
+
+        goals_worksheet = (
+            spreadsheet.worksheet(
+                "Financial_Goals"
+            )
+        )
+
+        goals_records = (
+            goals_worksheet.get_all_records()
+        )
+
+        goals_df = pd.DataFrame(
+            goals_records
+        )
+
+    except Exception:
+
+        goals_df = pd.DataFrame()
+
+
+except Exception:
+
+    goals_df = pd.DataFrame()
+
+
+if goals_df.empty:
+
+    st.info(
+        "No financial goals have been created yet. "
+        "Create goals from the Goals section."
+    )
+
+else:
+
+    goals_df["Target Amount"] = pd.to_numeric(
+        goals_df["Target Amount"],
+        errors="coerce",
+    ).fillna(0)
+
+
+    goals_df["Current Saved"] = pd.to_numeric(
+        goals_df["Current Saved"],
+        errors="coerce",
+    ).fillna(0)
+
+
+    goals_df["Remaining"] = (
+        goals_df["Target Amount"]
+        - goals_df["Current Saved"]
+    ).clip(lower=0)
+
+
+    goals_df["Progress"] = 0.0
+
+
+    positive_target = (
+        goals_df["Target Amount"] > 0
+    )
+
+
+    goals_df.loc[
+        positive_target,
+        "Progress"
+    ] = (
+        goals_df.loc[
+            positive_target,
+            "Current Saved"
+        ]
+        /
+        goals_df.loc[
+            positive_target,
+            "Target Amount"
+        ]
+    )
+
+
+    goals_df["Progress"] = (
+        goals_df["Progress"]
+        .clip(
+            lower=0,
+            upper=1,
+        )
+    )
+
+
+    active_goals = goals_df[
+        goals_df["Remaining"] > 0
+    ].copy()
+
+
+    completed_goals = goals_df[
+        goals_df["Remaining"] <= 0
+    ].copy()
+
+
+    total_goal_target = (
+        goals_df["Target Amount"].sum()
+    )
+
+
+    total_goal_saved = (
+        goals_df["Current Saved"].sum()
+    )
+
+
+    total_goal_remaining = (
+        active_goals["Remaining"].sum()
+    )
+
+
+    col1, col2, col3, col4 = st.columns(4)
+
+
+    with col1:
+
+        st.metric(
+            "Active Goals",
+            len(active_goals),
+        )
+
+
+    with col2:
+
+        st.metric(
+            "Completed Goals",
+            len(completed_goals),
+        )
+
+
+    with col3:
+
+        st.metric(
+            "Goal Amount",
+            f"₹{total_goal_target:,.2f}",
+        )
+
+
+    with col4:
+
+        st.metric(
+            "Goal Remaining",
+            f"₹{total_goal_remaining:,.2f}",
+        )
+
+
+    if not active_goals.empty:
+
+        st.markdown(
+            "### Active Goal Funding"
+        )
+
+
+        for _, goal in active_goals.iterrows():
+
+            goal_name = str(
+                goal["Goal Name"]
+            )
+
+
+            target_amount = float(
+                goal["Target Amount"]
+            )
+
+
+            current_saved = float(
+                goal["Current Saved"]
+            )
+
+
+            remaining = float(
+                goal["Remaining"]
+            )
+
+
+            progress = float(
+                goal["Progress"]
+            )
+
+
+            st.write(
+                f"**{goal_name}**"
+            )
+
+
+            st.progress(
+                progress
+            )
+
+
+            st.caption(
+                f"Saved ₹{current_saved:,.2f} "
+                f"of ₹{target_amount:,.2f} "
+                f"• Remaining ₹{remaining:,.2f}"
+            )
+
+
+# ==================================================
+# GOAL FUNDING VS SAVINGS
+# ==================================================
+
+st.divider()
+
+st.subheader("Goal Funding Capacity")
+
+
+if not goals_df.empty and not active_goals.empty:
+
+    monthly_goal_requirement = 0.0
+
+
+    if "Target Date" in active_goals.columns:
+
+        today = pd.Timestamp.today().normalize()
+
+
+        for _, goal in active_goals.iterrows():
+
+            target_date = pd.to_datetime(
+                goal["Target Date"],
+                errors="coerce",
+            )
+
+
+            remaining = float(
+                goal["Remaining"]
+            )
+
+
+            if pd.isna(target_date):
+
+                continue
+
+
+            months_remaining = (
+                (
+                    target_date.year
+                    - today.year
+                )
+                * 12
+                +
+                (
+                    target_date.month
+                    - today.month
+                )
+            )
+
+
+            if months_remaining <= 0:
+
+                months_remaining = 1
+
+
+            monthly_goal_requirement += (
+                remaining
+                / months_remaining
+            )
+
+
+    if monthly_goal_requirement > 0:
+
+        st.metric(
+            "Estimated Monthly Goal Saving Needed",
+            f"₹{monthly_goal_requirement:,.2f}",
+        )
+
+
+        if average_monthly_savings >= (
+            monthly_goal_requirement
+        ):
+
+            st.success(
+                "Your average monthly savings are "
+                "currently sufficient to cover the "
+                "estimated goal funding requirement."
+            )
+
+        else:
+
+            shortfall = (
+                monthly_goal_requirement
+                - average_monthly_savings
+            )
+
+
+            st.warning(
+                f"Your average monthly savings are "
+                f"approximately ₹{shortfall:,.2f} "
+                "below the estimated goal funding requirement."
+            )
+
+    else:
+
+        st.info(
+            "Goal target dates are not available, "
+            "so monthly goal funding cannot be estimated."
+        )
+
+else:
+
+    st.info(
+        "Create an active financial goal with a target date "
+        "to analyse goal funding capacity."
+    )
+
+
+# ==================================================
 # MONTHLY CASH FLOW
-# =========================================================
+# ==================================================
 
 st.divider()
 
 st.subheader("Monthly Cash Flow")
 
 
-monthly_display = monthly_analysis.reset_index()
+monthly_display = (
+    monthly_analysis
+    .reset_index()
+)
+
 
 monthly_display["Month"] = (
-    monthly_display["Month Period"]
+    monthly_display[
+        "Month Period"
+    ]
     .astype(str)
 )
 
@@ -412,6 +735,11 @@ monthly_display = monthly_display[
         "Savings",
     ]
 ].copy()
+
+
+# Show all amounts as positive where appropriate.
+# Savings remains signed because it represents
+# positive/negative cash flow.
 
 
 st.dataframe(
@@ -440,9 +768,9 @@ st.dataframe(
 )
 
 
-# =========================================================
+# ==================================================
 # CASH FLOW CONSISTENCY
-# =========================================================
+# ==================================================
 
 st.divider()
 
@@ -476,9 +804,9 @@ with col3:
     )
 
 
-# =========================================================
+# ==================================================
 # FINANCIAL INSIGHTS
-# =========================================================
+# ==================================================
 
 st.divider()
 
@@ -491,7 +819,6 @@ if total_income <= 0:
         "Add income transactions to get meaningful "
         "financial health insights."
     )
-
 
 else:
 
@@ -527,8 +854,8 @@ else:
     if expense_ratio > 90:
 
         st.warning(
-            "More than 90% of your income is currently being "
-            "used for expenses."
+            "More than 90% of your income is currently "
+            "being used for expenses."
         )
 
 
@@ -543,5 +870,21 @@ else:
     if positive_months == number_of_months:
 
         st.success(
-            "Your cash flow was positive in every analysed month."
+            "Your cash flow was positive in every "
+            "analysed month."
+        )
+
+
+    if (
+        not goals_df.empty
+        and
+        total_goal_remaining > 0
+        and
+        average_monthly_savings <= 0
+    ):
+
+        st.error(
+            "Your current average monthly savings are not "
+            "positive enough to fund your active goals. "
+            "Review spending or adjust goal timelines."
         )
