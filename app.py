@@ -69,6 +69,7 @@ settings = st.Page(
 )
 
 
+# Navigation
 pg = st.navigation(
     {
         "Main": [
@@ -84,6 +85,7 @@ pg = st.navigation(
         "Planning": [
             planning,
             financial_health,
+            goals,
             investments,
             calculators,
         ],
