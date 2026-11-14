@@ -35,144 +35,6 @@ savings_percentage = summary["savings_percentage"]
 
 
 # =========================================================
-# DASHBOARD CARD STYLES
-# =========================================================
-
-st.markdown(
-    """
-    <style>
-
-    .dashboard-card {
-        position: relative;
-        padding: 1rem 1.1rem;
-        min-height: 108px;
-        border-radius: 12px;
-
-        border: 1px solid #e1e5ec;
-
-        box-shadow:
-            0 2px 8px rgba(20, 25, 40, 0.04);
-
-        overflow: hidden;
-    }
-
-
-    .dashboard-card-label {
-        font-size: 0.78rem;
-        font-weight: 600;
-        margin-bottom: 0.55rem;
-    }
-
-
-    .dashboard-card-value {
-        font-size: 1.45rem;
-        font-weight: 750;
-        line-height: 1.2;
-    }
-
-
-    .dashboard-card-income {
-        background: #eef9f2;
-        border-left: 4px solid #35a765;
-    }
-
-    .dashboard-card-income
-    .dashboard-card-label {
-        color: #26794a;
-    }
-
-    .dashboard-card-income
-    .dashboard-card-value {
-        color: #176b3b;
-    }
-
-
-    .dashboard-card-expense {
-        background: #fff3f2;
-        border-left: 4px solid #df625d;
-    }
-
-    .dashboard-card-expense
-    .dashboard-card-label {
-        color: #a44845;
-    }
-
-    .dashboard-card-expense
-    .dashboard-card-value {
-        color: #a52f2f;
-    }
-
-
-    .dashboard-card-balance {
-        background: #eef5ff;
-        border-left: 4px solid #4b82d5;
-    }
-
-    .dashboard-card-balance
-    .dashboard-card-label {
-        color: #315f9f;
-    }
-
-    .dashboard-card-balance
-    .dashboard-card-value {
-        color: #245ca8;
-    }
-
-
-    .dashboard-card-savings {
-        background: #f5f0ff;
-        border-left: 4px solid #8060c9;
-    }
-
-    .dashboard-card-savings
-    .dashboard-card-label {
-        color: #6540a8;
-    }
-
-    .dashboard-card-savings
-    .dashboard-card-value {
-        color: #5834a0;
-    }
-
-
-    .dashboard-section-note {
-        color: #737986;
-        font-size: 0.82rem;
-        margin-top: -0.25rem;
-        margin-bottom: 0.75rem;
-    }
-
-
-    .dashboard-insight {
-        padding: 1rem 1.15rem;
-        border-radius: 11px;
-        border: 1px solid #e1e5ec;
-        background: #ffffff;
-        box-shadow: 0 2px 8px rgba(20, 25, 40, 0.03);
-    }
-
-
-    .dashboard-insight-title {
-        font-size: 0.95rem;
-        font-weight: 700;
-        color: #252a34;
-        margin-bottom: 0.3rem;
-    }
-
-
-    .dashboard-insight-text {
-        color: #5d6470;
-        font-size: 0.88rem;
-        line-height: 1.55;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-
-# =========================================================
 # FINANCIAL OVERVIEW
 # =========================================================
 
@@ -182,8 +44,6 @@ st.subheader("Financial Overview")
 st.markdown(
     """
     <style>
-
-    /* Dashboard metric cards */
 
     [data-testid="stMetric"] {
         background: #ffffff;
@@ -206,69 +66,6 @@ st.markdown(
         color: #252a34 !important;
     }
 
-    /* Income */
-
-    .income-metric [data-testid="stMetric"] {
-        background: #eef9f2;
-        border-left: 4px solid #35a765;
-    }
-
-    .income-metric [data-testid="stMetricLabel"] {
-        color: #26794a !important;
-    }
-
-    .income-metric [data-testid="stMetricValue"] {
-        color: #176b3b !important;
-    }
-
-
-    /* Expense */
-
-    .expense-metric [data-testid="stMetric"] {
-        background: #fff3f2;
-        border-left: 4px solid #df625d;
-    }
-
-    .expense-metric [data-testid="stMetricLabel"] {
-        color: #a44845 !important;
-    }
-
-    .expense-metric [data-testid="stMetricValue"] {
-        color: #a52f2f !important;
-    }
-
-
-    /* Balance */
-
-    .balance-metric [data-testid="stMetric"] {
-        background: #eef5ff;
-        border-left: 4px solid #4b82d5;
-    }
-
-    .balance-metric [data-testid="stMetricLabel"] {
-        color: #315f9f !important;
-    }
-
-    .balance-metric [data-testid="stMetricValue"] {
-        color: #245ca8 !important;
-    }
-
-
-    /* Savings */
-
-    .savings-metric [data-testid="stMetric"] {
-        background: #f5f0ff;
-        border-left: 4px solid #8060c9;
-    }
-
-    .savings-metric [data-testid="stMetricLabel"] {
-        color: #6540a8 !important;
-    }
-
-    .savings-metric [data-testid="stMetricValue"] {
-        color: #5834a0 !important;
-    }
-
     </style>
     """,
     unsafe_allow_html=True,
@@ -279,87 +76,32 @@ col1, col2, col3, col4 = st.columns(4)
 
 
 with col1:
-
-    st.markdown(
-        '<div class="income-metric">',
-        unsafe_allow_html=True,
-    )
-
     st.metric(
         "Total Income",
         f"₹{total_income:,.2f}",
     )
 
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
 
 with col2:
-
-    st.markdown(
-        '<div class="expense-metric">',
-        unsafe_allow_html=True,
-    )
-
     st.metric(
         "Total Expenses",
         f"₹{total_expenses:,.2f}",
     )
 
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
 
 with col3:
-
-    if balance >= 0:
-        balance_class = "balance-metric"
-        balance_label = "Current Balance"
-    else:
-        balance_class = "expense-metric"
-        balance_label = "Negative Balance"
-
-    st.markdown(
-        f'<div class="{balance_class}">',
-        unsafe_allow_html=True,
-    )
-
     st.metric(
-        balance_label,
+        "Current Balance",
         f"₹{balance:,.2f}",
-    )
-
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True,
     )
 
 
 with col4:
-
-    if savings_percentage >= 20:
-        savings_class = "income-metric"
-    else:
-        savings_class = "savings-metric"
-
-    st.markdown(
-        f'<div class="{savings_class}">',
-        unsafe_allow_html=True,
-    )
-
     st.metric(
         "Savings Rate",
         f"{savings_percentage:.1f}%",
     )
 
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True,
-    )
 
 # =========================================================
 # MONTHLY OVERVIEW
@@ -369,12 +111,7 @@ st.divider()
 
 st.subheader("Monthly Overview")
 
-st.markdown(
-    '<div class="dashboard-section-note">'
-    'Income and expenses by month'
-    '</div>',
-    unsafe_allow_html=True,
-)
+st.caption("Income and expenses by month")
 
 
 month_names = [
@@ -406,7 +143,6 @@ available_years = sorted(
 selected_year = st.selectbox(
     "Year",
     available_years,
-    label_visibility="collapsed",
 )
 
 
@@ -466,37 +202,28 @@ monthly_chart = px.bar(
 
 monthly_chart.update_layout(
     height=390,
-
     plot_bgcolor="white",
     paper_bgcolor="white",
-
     xaxis_title="",
     yaxis_title="Amount",
-
     legend_title="",
-
     margin=dict(
         l=10,
         r=10,
         t=20,
         b=10,
     ),
-
     hovermode="x unified",
-
     font=dict(
         size=12,
     ),
-
     xaxis=dict(
         showgrid=False,
         tickfont=dict(size=11),
     ),
-
     yaxis=dict(
         showgrid=True,
         gridcolor="#eef0f4",
-        tickprefix="₹",
         tickfont=dict(size=11),
     ),
 )
@@ -525,12 +252,7 @@ st.divider()
 
 st.subheader("Recent Transactions")
 
-st.markdown(
-    '<div class="dashboard-section-note">'
-    'Your latest five transactions'
-    '</div>',
-    unsafe_allow_html=True,
-)
+st.caption("Your latest five transactions")
 
 
 recent_transactions = (
@@ -684,9 +406,3 @@ else:
         f"**{insight_title}**\n\n"
         f"{insight_text}"
     )
-
-    insight_class = "dashboard-card-expense"
-
-    """,
-    unsafe_allow_html=True,
-)
