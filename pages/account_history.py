@@ -1,33 +1,110 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 
 from utils.data import load_expenses
-from utils.calculations import calculate_summary
 
 
-st.title("💰 Account History")
+st.set_page_config(
+    page_title="Account History",
+    layout="wide",
+)
 
 
-# ============================================================
+st.title("Account History")
+st.caption("View your income and spending history")
+
+
+# --------------------------------------------------
 # LOAD DATA
-# ============================================================
+# --------------------------------------------------
 
 try:
+
     df = load_expenses()
-    summary = calculate_summary(df)
 
 except Exception as e:
+
     st.error("Unable to load account history.")
     st.exception(e)
     st.stop()
 
 
-# ============================================================
-# MONTH NAMES
-# ============================================================
+if df.empty:
+
+    st.info(
+        "No transactions available yet. "
+        "Add your first transaction from Add Transaction."
+    )
+
+    st.stop()
+
+
+# --------------------------------------------------
+# PREPARE DATA
+# --------------------------------------------------
+
+df = df.copy()
+
+df = df.dropna(
+    subset=["Date"]
+)
+
+df["Year"] = (
+    df["Date"]
+    .dt.year
+)
+
+df["Month"] = (
+    df["Date"]
+    .dt.month
+)
+
+df["Month Name"] = (
+    df["Date"]
+    .dt.strftime("%B")
+)
+
+
+# --------------------------------------------------
+# YEAR FILTER
+# --------------------------------------------------
+
+available_years = sorted(
+    df["Year"]
+    .dropna()
+    .astype(int)
+    .unique()
+    .tolist(),
+    reverse=True,
+)
+
+
+selected_year = st.selectbox(
+    "Year",
+    available_years,
+)
+
+
+year_df = df[
+    df["Year"] == selected_year
+].copy()
+
+
+if year_df.empty:
+
+    st.info(
+        "No transactions found for the selected year."
+    )
+
+    st.stop()
+
+
+# --------------------------------------------------
+# MONTH FILTER
+# --------------------------------------------------
 
 month_names = [
+    "All Months",
     "January",
     "February",
     "March",
@@ -43,344 +120,288 @@ month_names = [
 ]
 
 
-# ============================================================
-# AVAILABLE YEARS
-# ============================================================
-
-available_years = sorted(
-    df["Year"]
-    .dropna()
-    .astype(int)
-    .unique()
-    .tolist(),
-    reverse=True,
+selected_month = st.selectbox(
+    "Month",
+    month_names,
 )
-
-
-if not available_years:
-    st.warning("No transaction data available.")
-    st.stop()
-
-
-# ============================================================
-# YEAR AND MONTH
-# ============================================================
-
-col1, col2 = st.columns(2)
-
-
-with col1:
-
-    selected_year = st.selectbox(
-        "Year",
-        available_years,
-        label_visibility="collapsed",
-    )
-
-
-with col2:
-
-    year_df = df[
-        df["Year"] == selected_year
-    ].copy()
-
-    available_month_values = sorted(
-        year_df["Month"]
-        .dropna()
-        .unique()
-        .tolist()
-    )
-
-    month_display = {
-        f"{selected_year}-{month:02d}": month_names[month - 1]
-        for month in range(1, 13)
-    }
-
-    available_month_names = [
-        month_display[month]
-        for month in available_month_values
-        if month in month_display
-    ]
-
-    month_options = [
-        "All Months"
-    ] + available_month_names
-
-    selected_month = st.selectbox(
-        "Month",
-        month_options,
-        label_visibility="collapsed",
-    )
-
-
-# ============================================================
-# FILTER YEAR + MONTH
-# ============================================================
-
-filtered_df = year_df.copy()
 
 
 if selected_month != "All Months":
 
     selected_month_number = (
-        month_names.index(selected_month) + 1
+        month_names.index(
+            selected_month
+        )
     )
 
-    selected_month_value = (
-        f"{selected_year}-{selected_month_number:02d}"
-    )
+    filtered_df = year_df[
+        year_df["Month"]
+        == selected_month_number
+    ].copy()
 
-    filtered_df = filtered_df[
-        filtered_df["Month"] == selected_month_value
-    ]
+else:
+
+    filtered_df = year_df.copy()
 
 
-# ============================================================
-# SUBTITLE
-# ============================================================
+# --------------------------------------------------
+# PAGE DESCRIPTION
+# --------------------------------------------------
 
 if selected_month == "All Months":
 
     st.caption(
-        f"Account history for {selected_year}"
+        f"Account activity for {selected_year}"
     )
 
 else:
 
     st.caption(
-        f"Account history for {selected_month} {selected_year}"
+        f"Account activity for "
+        f"{selected_month} {selected_year}"
     )
+
+
+# --------------------------------------------------
+# SUMMARY
+# --------------------------------------------------
+
+total_received = filtered_df.loc[
+    filtered_df["Type"] == "Income",
+    "Amount",
+].sum()
+
+
+total_spent = filtered_df.loc[
+    filtered_df["Type"] == "Expense",
+    "Expense Amount",
+].sum()
+
+
+net_balance = (
+    total_received
+    - total_spent
+)
 
 
 st.divider()
 
-
-# ============================================================
-# TOTALS
-# ============================================================
-
-selected_income = (
-    filtered_df.loc[
-        filtered_df["Type"] == "Income",
-        "Amount",
-    ].sum()
-)
-
-
-selected_expenses = (
-    filtered_df.loc[
-        filtered_df["Type"] == "Expense",
-        "Expense Amount",
-    ].sum()
-)
-
-
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 
 with col1:
 
     st.metric(
-        "💵 Total Received",
-        f"₹{selected_income:,.2f}",
+        "Total Received",
+        f"₹{total_received:,.2f}",
     )
 
 
 with col2:
 
     st.metric(
-        "💸 Total Spent",
-        f"₹{selected_expenses:,.2f}",
+        "Total Spent",
+        f"₹{total_spent:,.2f}",
     )
 
 
+with col3:
+
+    st.metric(
+        "Net Balance",
+        f"₹{net_balance:,.2f}",
+    )
+
+
+# --------------------------------------------------
+# CATEGORY FILTER
+# --------------------------------------------------
+
 st.divider()
 
+st.subheader("Transactions")
 
-# ============================================================
-# CATEGORY
-# ============================================================
 
 available_categories = sorted(
     filtered_df["Category"]
     .dropna()
     .astype(str)
-    .str.strip()
     .unique()
     .tolist()
 )
 
 
-category_options = [
-    "📂 All Categories"
-] + available_categories
-
-
-selected_category_display = st.selectbox(
+selected_category = st.selectbox(
     "Category",
-    category_options,
-    label_visibility="collapsed",
+    ["All Categories"] + available_categories,
 )
 
 
-if selected_category_display == "📂 All Categories":
-
-    selected_category = "All Categories"
-
-else:
-
-    selected_category = selected_category_display
-
-
-# ============================================================
-# CATEGORY FILTER
-# ============================================================
-
-category_transactions = filtered_df.copy()
+category_df = filtered_df.copy()
 
 
 if selected_category != "All Categories":
 
-    category_transactions = category_transactions[
-        category_transactions["Category"].astype(str).str.strip()
+    category_df = category_df[
+        category_df["Category"]
         == selected_category
-    ]
-
-
-# ============================================================
-# TRANSACTIONS
-# ============================================================
-
-st.subheader("🧾 Transactions")
-
-
-if selected_category == "All Categories":
-
-    st.caption(
-        "Showing transactions for the selected year and month."
-    )
-
-else:
-
-    st.caption(
-        f"Showing transactions for: **{selected_category}**"
-    )
-
-
-if category_transactions.empty:
-
-    st.info(
-        "No transactions found for this selection."
-    )
-
-else:
-
-    transaction_columns = [
-        "Date",
-        "Description",
-        "Category",
-        "Amount",
-        "Type",
-        "Paid to or received from",
-    ]
-
-    display_df = category_transactions[
-        transaction_columns
     ].copy()
 
-    display_df["Date"] = display_df["Date"].dt.strftime(
-        "%d/%m/%Y"
+
+# --------------------------------------------------
+# TRANSACTION TABLE
+# --------------------------------------------------
+
+if category_df.empty:
+
+    st.info(
+        "No transactions found for the selected filters."
     )
+
+else:
+
+    display_df = category_df.sort_values(
+        "Date",
+        ascending=False,
+    ).copy()
+
+
+    # ----------------------------------------------
+    # IMPORTANT:
+    # SHOW AMOUNTS AS POSITIVE VALUES
+    # ----------------------------------------------
+
+    display_df["Amount"] = (
+        display_df["Amount"]
+        .abs()
+    )
+
+
+    display_df["Date"] = (
+        display_df["Date"]
+        .dt.strftime("%d/%m/%Y")
+    )
+
+
+    display_df = display_df[
+        [
+            "Date",
+            "Description",
+            "Category",
+            "Amount",
+            "Type",
+            "Paid to or received from",
+        ]
+    ].copy()
+
 
     st.dataframe(
         display_df,
         use_container_width=True,
         hide_index=True,
+        column_config={
+
+            "Date": st.column_config.TextColumn(
+                "Date",
+            ),
+
+            "Description": st.column_config.TextColumn(
+                "Description",
+            ),
+
+            "Category": st.column_config.TextColumn(
+                "Category",
+            ),
+
+            "Amount": st.column_config.NumberColumn(
+                "Amount",
+                format="₹%.2f",
+            ),
+
+            "Type": st.column_config.TextColumn(
+                "Type",
+            ),
+
+            "Paid to or received from":
+                st.column_config.TextColumn(
+                    "Paid to or received from",
+                ),
+        },
     )
 
+
+# --------------------------------------------------
+# 12-MONTH SPENDING CHART
+# --------------------------------------------------
 
 st.divider()
 
-
-# ============================================================
-# MONTHLY SPENDING
-# ============================================================
-
 st.subheader(
-    f"📊 Monthly Spending — {selected_year}"
+    f"Monthly Spending — {selected_year}"
 )
 
 
-all_month_values = [
-    f"{selected_year}-{month:02d}"
-    for month in range(1, 13)
+# Month numbers 1-12
+month_numbers = list(
+    range(1, 13)
+)
+
+
+month_labels = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
 ]
 
 
-yearly_spending = (
+monthly_spending = (
     year_df[
         year_df["Type"] == "Expense"
     ]
-    .groupby("Month")["Expense Amount"]
+    .groupby("Month")[
+        "Expense Amount"
+    ]
     .sum()
-    .reindex(
-        all_month_values,
-        fill_value=0,
-    )
-    .reset_index()
 )
 
 
-yearly_spending.columns = [
-    "Month",
-    "Spent",
-]
-
-
-yearly_spending["Month"] = yearly_spending[
-    "Month"
-].map(month_display)
-
-
-yearly_spending["Month"] = pd.Categorical(
-    yearly_spending["Month"],
-    categories=month_names,
-    ordered=True,
+monthly_chart_df = pd.DataFrame(
+    {
+        "Month": month_labels,
+        "Spending": [
+            monthly_spending.get(
+                month_number,
+                0,
+            )
+            for month_number
+            in month_numbers
+        ],
+    }
 )
 
 
-yearly_spending = yearly_spending.sort_values(
-    "Month"
+monthly_chart_df = (
+    monthly_chart_df
+    .set_index("Month")
 )
 
 
-spending_chart = px.bar(
-    yearly_spending,
-    x="Month",
-    y="Spent",
-    text="Spent",
+st.bar_chart(
+    monthly_chart_df,
+    y="Spending",
 )
 
 
-spending_chart.update_traces(
-    texttemplate="₹%{text:,.0f}",
-    textposition="outside",
-    hovertemplate=(
-        "<b>%{x}</b>"
-        "<br>Spent: ₹%{y:,.2f}"
-        "<extra></extra>"
-    ),
-)
-
-
-spending_chart.update_layout(
-    xaxis_title="Month",
-    yaxis_title="Total Spent (₹)",
-    showlegend=False,
-)
-
-
-st.plotly_chart(
-    spending_chart,
-    use_container_width=True,
+st.caption(
+    "Monthly spending includes all expense transactions "
+    "for the selected year. Months with no spending show ₹0."
 )
