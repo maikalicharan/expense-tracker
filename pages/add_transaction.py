@@ -1,6 +1,8 @@
+```python
 import streamlit as st
 
 from utils.sheets import get_google_sheet
+from utils.data import load_expenses
 
 
 st.title("➕ Add Transaction")
@@ -19,33 +21,71 @@ except Exception as e:
 st.subheader("Transaction Details")
 
 
+# ---------------------------------------------------------
+# Load existing categories
+# ---------------------------------------------------------
+
+try:
+
+    records = worksheet.get_all_records()
+
+    existing_categories = sorted(
+        {
+            str(row.get("Category", "")).strip()
+            for row in records
+            if str(row.get("Category", "")).strip()
+        }
+    )
+
+except Exception as e:
+
+    st.error("Unable to load categories.")
+    st.exception(e)
+    st.stop()
+
+
+# ---------------------------------------------------------
+# Transaction form
+# ---------------------------------------------------------
+
 with st.form("transaction_form"):
 
-    date = st.date_input("Date")
+    date = st.date_input(
+        "Date"
+    )
 
     description = st.text_input(
         "Description",
         placeholder="Example: Grocery shopping",
     )
 
-    records = worksheet.get_all_records()
+    category_options = [
+        "➕ Add New Category"
+    ] + existing_categories
 
-    existing_categories = sorted(
-        {
-            str(row["Category"]).strip()
-            for row in records
-            if row.get("Category")
-        }
-    )
-
-    category = st.selectbox(
+    selected_category = st.selectbox(
         "Category",
-        existing_categories,
+        category_options,
     )
+
+    if selected_category == "➕ Add New Category":
+
+        new_category = st.text_input(
+            "New Category",
+            placeholder="Example: Groceries",
+        )
+
+    else:
+
+        new_category = ""
+
 
     transaction_type = st.selectbox(
         "Type",
-        ["Expense", "Income"],
+        [
+            "Expense",
+            "Income",
+        ],
     )
 
     amount = st.number_input(
@@ -66,7 +106,32 @@ with st.form("transaction_form"):
     )
 
 
+# ---------------------------------------------------------
+# Save transaction
+# ---------------------------------------------------------
+
 if submitted:
+
+    # Determine final category
+
+    if selected_category == "➕ Add New Category":
+
+        final_category = new_category.strip()
+
+        if not final_category:
+
+            st.error(
+                "Please enter a category name."
+            )
+
+            st.stop()
+
+    else:
+
+        final_category = selected_category
+
+
+    # Validate amount
 
     if amount <= 0:
 
@@ -74,12 +139,30 @@ if submitted:
             "Please enter an amount greater than 0."
         )
 
+        st.stop()
+
+
+    # Determine positive / negative amount
+
+    if transaction_type == "Expense":
+
+        final_amount = -amount
+
     else:
 
-        if transaction_type == "Expense":
-            final_amount = -amount
-        else:
-            final_amount = amount
+        final_amount = amount
+
+
+    try:
+
+        # Get latest records before generating ID
+
+        records = worksheet.get_all_records()
+
+
+        # -------------------------------------------------
+        # Generate new ID
+        # -------------------------------------------------
 
         existing_ids = [
             row.get("ID")
@@ -92,33 +175,61 @@ if submitted:
         for existing_id in existing_ids:
 
             try:
-                numeric_ids.append(int(existing_id))
+
+                numeric_ids.append(
+                    int(float(existing_id))
+                )
 
             except (ValueError, TypeError):
+
                 pass
 
+
         if numeric_ids:
+
             new_id = max(numeric_ids) + 1
 
         else:
+
             new_id = 1
+
+
+        # -------------------------------------------------
+        # Add row to Google Sheet
+        # -------------------------------------------------
 
         worksheet.append_row(
             [
                 new_id,
                 date.strftime("%d/%m/%Y"),
-                description,
-                category,
+                description.strip(),
+                final_category,
                 final_amount,
-                paid_to_received_from,
+                paid_to_received_from.strip(),
             ]
         )
+
+
+        # Clear cached data so other pages get fresh data
+
+        load_expenses.clear()
+
 
         st.success(
             f"Transaction #{new_id} added successfully! 🎉"
         )
 
         st.info(
-            "Your Google Sheet has been updated. "
-            "Refresh the Account History page to see the new transaction."
+            "Your transaction has been saved. "
+            "You can now view it in Account History or Transactions."
         )
+
+
+    except Exception as e:
+
+        st.error(
+            "Unable to save the transaction to Google Sheets."
+        )
+
+        st.exception(e)
+```
