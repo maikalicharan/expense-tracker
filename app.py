@@ -127,6 +127,21 @@ monthly_data["Amount"] = monthly_data.apply(
     axis=1,
 )
 
+month_names = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
+
 all_months = [
     f"{selected_year}-{month:02d}"
     for month in range(1, 13)
