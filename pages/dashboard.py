@@ -280,31 +280,61 @@ monthly_chart = px.bar(
 )
 
 
+theme = st.session_state.get("theme", "Light")
+
+if theme == "Dark":
+
+    chart_background = "#0f172a"
+    chart_grid = "#334155"
+    chart_text = "#cbd5e1"
+
+else:
+
+    chart_background = "white"
+    chart_grid = "#eef0f4"
+    chart_text = "#555c69"
+
+
 monthly_chart.update_layout(
     height=390,
-    plot_bgcolor="white",
-    paper_bgcolor="white",
+
+    plot_bgcolor=chart_background,
+    paper_bgcolor=chart_background,
+
     xaxis_title="",
     yaxis_title="Amount",
+
     legend_title="",
+
     margin=dict(
         l=10,
         r=10,
         t=20,
         b=10,
     ),
+
     hovermode="x unified",
+
     font=dict(
         size=12,
+        color=chart_text,
     ),
+
     xaxis=dict(
         showgrid=False,
-        tickfont=dict(size=11),
+        tickfont=dict(
+            size=11,
+            color=chart_text,
+        ),
     ),
+
     yaxis=dict(
         showgrid=True,
-        gridcolor="#eef0f4",
-        tickfont=dict(size=11),
+        gridcolor=chart_grid,
+        tickfont=dict(
+            size=11,
+            color=chart_text,
+        ),
     ),
 )
 
