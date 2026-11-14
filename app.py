@@ -36,6 +36,11 @@ planning = st.Page(
     title="Planning",
 )
 
+financial_health = st.Page(
+    "pages/financial_health.py",
+    title="Financial Health",
+)
+
 investments = st.Page(
     "pages/investments.py",
     title="Investments",
