@@ -48,7 +48,6 @@ if df.empty:
 
 st.subheader("Filters")
 
-
 col1, col2, col3, col4 = st.columns(4)
 
 
@@ -233,6 +232,10 @@ export_df = filtered_df.sort_values(
 ).copy()
 
 
+# Show positive amounts in exported file
+export_df["Amount"] = export_df["Amount"].abs()
+
+
 export_df["Date"] = (
     export_df["Date"]
     .dt.strftime("%d/%m/%Y")
@@ -321,9 +324,9 @@ if filtered_df.empty:
 else:
 
     st.caption(
-        "Edit the transaction details below. "
-        "Expense amounts should be positive or negative; "
-        "the app will automatically correct the sign."
+        "Enter amounts as positive numbers. "
+        "The transaction Type determines whether the "
+        "amount is stored as income or expense."
     )
 
 
@@ -339,6 +342,27 @@ else:
     )
 
 
+    # ----------------------------------------------
+    # KEEP ORIGINAL TYPE FOR SAVE LOGIC
+    # ----------------------------------------------
+
+    editable_df["Original Type"] = (
+        filtered_df
+        .sort_values(
+            "Date",
+            ascending=False,
+        )["Type"]
+        .values
+    )
+
+
+    # Display amount as positive
+    editable_df["Amount"] = (
+        editable_df["Amount"]
+        .abs()
+    )
+
+
     editable_df = editable_df[
         [
             "ID",
@@ -346,6 +370,7 @@ else:
             "Description",
             "Category",
             "Amount",
+            "Original Type",
             "Paid to or received from",
         ]
     ].copy()
@@ -356,7 +381,10 @@ else:
         use_container_width=True,
         hide_index=True,
         num_rows="fixed",
-        disabled=["ID"],
+        disabled=[
+            "ID",
+            "Original Type",
+        ],
         column_config={
 
             "ID": st.column_config.NumberColumn(
@@ -380,6 +408,12 @@ else:
             "Amount": st.column_config.NumberColumn(
                 "Amount",
                 format="₹%.2f",
+                min_value=0.01,
+            ),
+
+            "Original Type": st.column_config.TextColumn(
+                "Type",
+                disabled=True,
             ),
 
             "Paid to or received from":
@@ -432,15 +466,15 @@ else:
 
 
                 # --------------------------------------
-                # VALIDATE ID
+                # TRANSACTION ID
                 # --------------------------------------
-
-                transaction_id = changed_row["ID"]
 
                 try:
 
                     transaction_id = int(
-                        float(transaction_id)
+                        float(
+                            changed_row["ID"]
+                        )
                     )
 
                 except (
@@ -456,7 +490,7 @@ else:
 
 
                 # --------------------------------------
-                # VALIDATE DATE
+                # DATE
                 # --------------------------------------
 
                 date_text = str(
@@ -484,7 +518,7 @@ else:
 
 
                 # --------------------------------------
-                # VALIDATE CATEGORY
+                # CATEGORY
                 # --------------------------------------
 
                 category = str(
@@ -503,12 +537,12 @@ else:
 
 
                 # --------------------------------------
-                # VALIDATE AMOUNT
+                # AMOUNT
                 # --------------------------------------
 
                 try:
 
-                    amount = float(
+                    display_amount = float(
                         changed_row["Amount"]
                     )
 
@@ -525,10 +559,10 @@ else:
                     st.stop()
 
 
-                if amount == 0:
+                if display_amount <= 0:
 
                     st.error(
-                        f"Amount cannot be zero "
+                        f"Amount must be greater than zero "
                         f"for transaction #{transaction_id}."
                     )
 
@@ -536,25 +570,25 @@ else:
 
 
                 # --------------------------------------
-                # DETERMINE TYPE FROM ORIGINAL DATA
+                # CONVERT TO INTERNAL SIGN
                 # --------------------------------------
 
-                original_amount = float(
-                    original_row["Amount"]
+                transaction_type = str(
+                    changed_row["Original Type"]
                 )
 
 
-                if original_amount > 0:
+                if transaction_type == "Income":
 
-                    # Income must always be positive
-
-                    amount = abs(amount)
+                    final_amount = abs(
+                        display_amount
+                    )
 
                 else:
 
-                    # Expense must always be negative
-
-                    amount = -abs(amount)
+                    final_amount = -abs(
+                        display_amount
+                    )
 
 
                 # --------------------------------------
@@ -574,66 +608,67 @@ else:
 
 
                 # --------------------------------------
-                # CHECK WHETHER ACTUALLY CHANGED
+                # ORIGINAL VALUES
                 # --------------------------------------
 
-                normalized_original_date = (
-                    str(original_row["Date"])
+                original_amount = float(
+                    original_row["Amount"]
                 )
 
-                normalized_new_date = (
+                original_type = str(
+                    original_row["Original Type"]
+                )
+
+                original_date = str(
+                    original_row["Date"]
+                )
+
+                original_description = str(
+                    original_row["Description"]
+                ).strip()
+
+                original_category = str(
+                    original_row["Category"]
+                ).strip()
+
+                original_person = str(
+                    original_row[
+                        "Paid to or received from"
+                    ]
+                ).strip()
+
+
+                # --------------------------------------
+                # CHECK CHANGES
+                # --------------------------------------
+
+                original_signed_amount = (
+                    abs(original_amount)
+                    if original_type == "Income"
+                    else -abs(original_amount)
+                )
+
+
+                new_date = (
                     validated_date.strftime(
                         "%d/%m/%Y"
                     )
                 )
 
 
-                normalized_original_amount = float(
-                    original_row["Amount"]
-                )
-
-
-                normalized_original_description = (
-                    str(
-                        original_row[
-                            "Description"
-                        ]
-                    ).strip()
-                )
-
-
-                normalized_original_category = (
-                    str(
-                        original_row[
-                            "Category"
-                        ]
-                    ).strip()
-                )
-
-
-                normalized_original_person = (
-                    str(
-                        original_row[
-                            "Paid to or received from"
-                        ]
-                    ).strip()
-                )
-
-
                 if (
-                    normalized_original_date
-                    == normalized_new_date
+                    original_date == new_date
                     and
-                    normalized_original_amount
-                    == amount
+                    original_signed_amount
+                    == final_amount
                     and
-                    normalized_original_description
+                    original_description
                     == description
                     and
-                    normalized_original_category
+                    original_category
                     == category
                     and
-                    normalized_original_person
+                    original_person
                     == paid_to_received_from
                 ):
 
@@ -683,17 +718,17 @@ else:
 
 
                 # --------------------------------------
-                # UPDATE GOOGLE SHEET
+                # UPDATE SHEET
                 # --------------------------------------
 
                 worksheet.update(
                     f"A{sheet_row_number}:F{sheet_row_number}",
                     [[
                         transaction_id,
-                        normalized_new_date,
+                        new_date,
                         description,
                         category,
-                        amount,
+                        final_amount,
                         paid_to_received_from,
                     ]],
                 )
