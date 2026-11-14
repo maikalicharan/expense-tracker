@@ -52,7 +52,7 @@ def apply_custom_css():
 
         /* =================================================
            SIDEBAR
-           ================================================= */
+        ================================================= */
 
         section[data-testid="stSidebar"] {
             background-color: #ffffff;
@@ -85,27 +85,48 @@ def apply_custom_css():
 
         /* =================================================
            BUTTONS
-           ================================================= */
+        ================================================= */
+
+        .stButton {
+            width: fit-content !important;
+        }
 
         .stButton > button {
-            min-height: 2.15rem;
-            height: 2.15rem;
-            padding: 0.25rem 0.8rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
+            width: auto !important;
+            min-width: 90px;
+            max-width: fit-content;
+
+            min-height: 2.05rem;
+            height: 2.05rem;
+
+            padding: 0.2rem 0.85rem;
+
+            border-radius: 7px;
+
+            font-size: 0.82rem;
             font-weight: 600;
-            border: 1px solid #d8dce5;
+
+            border: 1px solid #d4d9e2;
+
             background-color: #ffffff;
             color: #303642;
+
             box-shadow: none;
-            transition: all 0.15s ease;
+
+            transition:
+                background-color 0.15s ease,
+                border-color 0.15s ease,
+                transform 0.15s ease;
         }
 
         .stButton > button:hover {
-            border-color: #8b94a5;
-            background-color: #f8f9fb;
+            background-color: #f3f5f8;
+            border-color: #9ba4b3;
             transform: translateY(-1px);
         }
+
+
+        /* Primary button */
 
         .stButton > button[kind="primary"] {
             background-color: #315fce;
@@ -120,16 +141,121 @@ def apply_custom_css():
 
 
         /* =================================================
+           FORM BUTTONS
+        ================================================= */
+
+        .stFormSubmitButton {
+            width: fit-content !important;
+        }
+
+        .stFormSubmitButton > button {
+            width: auto !important;
+            min-width: 110px;
+
+            min-height: 2.15rem;
+            height: 2.15rem;
+
+            padding: 0.25rem 0.9rem;
+
+            border-radius: 7px;
+
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+
+        /* =================================================
+           DOWNLOAD BUTTONS
+        ================================================= */
+
+        .stDownloadButton {
+            width: fit-content !important;
+        }
+
+        .stDownloadButton > button {
+            width: auto !important;
+            min-width: 95px;
+
+            min-height: 2.05rem;
+            height: 2.05rem;
+
+            padding: 0.2rem 0.85rem;
+
+            border-radius: 7px;
+
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+
+        /* =================================================
+           SELECTBOX / DROPDOWN
+        ================================================= */
+
+        .stSelectbox {
+            max-width: 260px;
+        }
+
+        .stSelectbox [data-baseweb="select"] {
+            width: 100%;
+        }
+
+        .stSelectbox [data-baseweb="select"] > div {
+            min-height: 2.15rem;
+            height: 2.15rem;
+
+            border-radius: 7px;
+
+            border: 1px solid #d4d9e2;
+
+            background-color: #ffffff;
+
+            font-size: 0.84rem;
+        }
+
+        .stSelectbox [data-baseweb="select"] > div:hover {
+            border-color: #9ba4b3;
+        }
+
+
+        /* =================================================
+           MULTISELECT
+        ================================================= */
+
+        .stMultiSelect {
+            max-width: 320px;
+        }
+
+        .stMultiSelect [data-baseweb="select"] > div {
+            min-height: 2.15rem;
+            border-radius: 7px;
+            border: 1px solid #d4d9e2;
+            background-color: #ffffff;
+        }
+
+
+        /* =================================================
            INPUTS
-           ================================================= */
+        ================================================= */
+
+        .stTextInput,
+        .stNumberInput,
+        .stDateInput {
+            max-width: 360px;
+        }
 
         .stTextInput input,
         .stNumberInput input,
         .stDateInput input {
-            min-height: 2.25rem;
-            border-radius: 8px;
+            min-height: 2.15rem;
+
+            border-radius: 7px;
+
             border: 1px solid #d9dde6;
+
             background-color: #ffffff;
+
+            font-size: 0.84rem;
         }
 
         .stTextInput input:focus,
@@ -139,17 +265,10 @@ def apply_custom_css():
             box-shadow: 0 0 0 1px #6d8fe5;
         }
 
-        .stSelectbox [data-baseweb="select"] > div {
-            min-height: 2.25rem;
-            border-radius: 8px;
-            border: 1px solid #d9dde6;
-            background-color: #ffffff;
-        }
-
 
         /* =================================================
            METRIC CARDS
-           ================================================= */
+        ================================================= */
 
         [data-testid="stMetric"] {
             background-color: #ffffff;
@@ -174,7 +293,7 @@ def apply_custom_css():
 
         /* =================================================
            DATA TABLES
-           ================================================= */
+        ================================================= */
 
         [data-testid="stDataFrame"] {
             border: 1px solid #e3e6ec;
@@ -186,7 +305,7 @@ def apply_custom_css():
 
         /* =================================================
            ALERTS
-           ================================================= */
+        ================================================= */
 
         [data-testid="stAlert"] {
             border-radius: 9px;
@@ -195,7 +314,7 @@ def apply_custom_css():
 
         /* =================================================
            EXPANDERS
-           ================================================= */
+        ================================================= */
 
         [data-testid="stExpander"] {
             border: 1px solid #e2e5eb;
@@ -206,7 +325,7 @@ def apply_custom_css():
 
         /* =================================================
            DIVIDERS
-           ================================================= */
+        ================================================= */
 
         hr {
             border-color: #e5e7ed;
@@ -216,36 +335,8 @@ def apply_custom_css():
 
 
         /* =================================================
-           DOWNLOAD BUTTONS
-           ================================================= */
-
-        .stDownloadButton > button {
-            min-height: 2.15rem;
-            height: 2.15rem;
-            padding: 0.25rem 0.8rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-
-        /* =================================================
-           FORM SUBMIT BUTTONS
-           ================================================= */
-
-        .stFormSubmitButton > button {
-            min-height: 2.25rem;
-            height: 2.25rem;
-            padding: 0.3rem 0.9rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-
-        /* =================================================
            MOBILE
-           ================================================= */
+        ================================================= */
 
         @media (max-width: 768px) {
 
@@ -275,6 +366,11 @@ def apply_custom_css():
                 min-height: 2rem;
                 height: 2rem;
                 font-size: 0.8rem;
+                padding: 0.2rem 0.7rem;
+            }
+
+            .stSelectbox {
+                max-width: 100%;
             }
 
         }
