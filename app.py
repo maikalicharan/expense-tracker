@@ -117,8 +117,16 @@ selected_month = st.selectbox(
 )
 
 if selected_month != "All Months":
+    selected_month_number = (
+        month_names.index(selected_month) + 1
+    )
+
+    selected_month_value = (
+        f"{selected_year}-{selected_month_number:02d}"
+    )
+
     filtered_df = filtered_df[
-        filtered_df["Month"] == selected_month
+        filtered_df["Month"] == selected_month_value
     ]
 
 
