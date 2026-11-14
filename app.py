@@ -94,6 +94,23 @@ if selected_month != "All Months":
     filtered_df = filtered_df[
         filtered_df["Month"] == selected_month
     ]
+
+
+# 12-month breakdown for selected year
+yearly_monthly_data = (
+    year_df.groupby(["Month", "Type"])["Amount"]
+    .sum()
+    .reset_index()
+)
+
+yearly_monthly_data["Amount"] = yearly_monthly_data.apply(
+    lambda row: (
+        abs(row["Amount"])
+        if row["Type"] == "Expense"
+        else row["Amount"]
+    ),
+    axis=1,
+)
     
 monthly_data = (
     filtered_df.groupby(["Month", "Type"])["Amount"]
