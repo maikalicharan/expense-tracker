@@ -34,100 +34,135 @@ balance = summary["balance"]
 savings_percentage = summary["savings_percentage"]
 
 
-# ---------------------------------------------------------
-# Dashboard styling
-# ---------------------------------------------------------
+# =========================================================
+# DASHBOARD CARD STYLES
+# =========================================================
 
 st.markdown(
     """
     <style>
 
-    .finance-card {
-        padding: 1.15rem 1.25rem;
-        border-radius: 14px;
-        min-height: 115px;
-        border: 1px solid rgba(0, 0, 0, 0.06);
-        box-shadow: 0 3px 12px rgba(20, 25, 40, 0.06);
+    .dashboard-card {
+        position: relative;
+        padding: 1rem 1.1rem;
+        min-height: 108px;
+        border-radius: 12px;
+
+        border: 1px solid #e1e5ec;
+
+        box-shadow:
+            0 2px 8px rgba(20, 25, 40, 0.04);
+
+        overflow: hidden;
     }
 
-    .finance-card-title {
-        font-size: 0.85rem;
+
+    .dashboard-card-label {
+        font-size: 0.78rem;
         font-weight: 600;
-        margin-bottom: 0.45rem;
+        margin-bottom: 0.55rem;
     }
 
-    .finance-card-value {
-        font-size: 1.6rem;
+
+    .dashboard-card-value {
+        font-size: 1.45rem;
         font-weight: 750;
         line-height: 1.2;
     }
 
-    .income-card {
-        background: #eaf7ef;
-        border-left: 5px solid #2e9d5b;
+
+    .dashboard-card-income {
+        background: #eef9f2;
+        border-left: 4px solid #35a765;
     }
 
-    .income-card .finance-card-title {
-        color: #267a48;
+    .dashboard-card-income
+    .dashboard-card-label {
+        color: #26794a;
     }
 
-    .income-card .finance-card-value {
+    .dashboard-card-income
+    .dashboard-card-value {
         color: #176b3b;
     }
 
-    .expense-card {
-        background: #fff0f0;
-        border-left: 5px solid #d9534f;
+
+    .dashboard-card-expense {
+        background: #fff3f2;
+        border-left: 4px solid #df625d;
     }
 
-    .expense-card .finance-card-title {
-        color: #a94442;
+    .dashboard-card-expense
+    .dashboard-card-label {
+        color: #a44845;
     }
 
-    .expense-card .finance-card-value {
+    .dashboard-card-expense
+    .dashboard-card-value {
         color: #a52f2f;
     }
 
-    .balance-card {
-        background: #edf4ff;
-        border-left: 5px solid #3978d3;
+
+    .dashboard-card-balance {
+        background: #eef5ff;
+        border-left: 4px solid #4b82d5;
     }
 
-    .balance-card .finance-card-title {
+    .dashboard-card-balance
+    .dashboard-card-label {
         color: #315f9f;
     }
 
-    .balance-card .finance-card-value {
+    .dashboard-card-balance
+    .dashboard-card-value {
         color: #245ca8;
     }
 
-    .savings-card {
-        background: #f3edff;
-        border-left: 5px solid #7a52c7;
+
+    .dashboard-card-savings {
+        background: #f5f0ff;
+        border-left: 4px solid #8060c9;
     }
 
-    .savings-card .finance-card-title {
+    .dashboard-card-savings
+    .dashboard-card-label {
         color: #6540a8;
     }
 
-    .savings-card .finance-card-value {
+    .dashboard-card-savings
+    .dashboard-card-value {
         color: #5834a0;
     }
 
-    .insight-card {
-        padding: 1rem 1.15rem;
-        border-radius: 12px;
-        border: 1px solid #e4e6ec;
-        background: #ffffff;
+
+    .dashboard-section-note {
+        color: #737986;
+        font-size: 0.82rem;
+        margin-top: -0.25rem;
+        margin-bottom: 0.75rem;
     }
 
-    .insight-title {
+
+    .dashboard-insight {
+        padding: 1rem 1.15rem;
+        border-radius: 11px;
+        border: 1px solid #e1e5ec;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(20, 25, 40, 0.03);
+    }
+
+
+    .dashboard-insight-title {
+        font-size: 0.95rem;
         font-weight: 700;
+        color: #252a34;
         margin-bottom: 0.3rem;
     }
 
-    .insight-text {
-        color: #555b68;
+
+    .dashboard-insight-text {
+        color: #5d6470;
+        font-size: 0.88rem;
         line-height: 1.55;
     }
 
@@ -137,9 +172,9 @@ st.markdown(
 )
 
 
-# ---------------------------------------------------------
-# Financial overview
-# ---------------------------------------------------------
+# =========================================================
+# FINANCIAL OVERVIEW
+# =========================================================
 
 st.subheader("Financial Overview")
 
@@ -150,13 +185,16 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.markdown(
         f"""
-        <div class="finance-card income-card">
-            <div class="finance-card-title">
+        <div class="dashboard-card dashboard-card-income">
+
+            <div class="dashboard-card-label">
                 Total Income
             </div>
-            <div class="finance-card-value">
+
+            <div class="dashboard-card-value">
                 ₹{total_income:,.2f}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -166,13 +204,16 @@ with col1:
 with col2:
     st.markdown(
         f"""
-        <div class="finance-card expense-card">
-            <div class="finance-card-title">
+        <div class="dashboard-card dashboard-card-expense">
+
+            <div class="dashboard-card-label">
                 Total Expenses
             </div>
-            <div class="finance-card-value">
+
+            <div class="dashboard-card-value">
                 ₹{total_expenses:,.2f}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -180,15 +221,30 @@ with col2:
 
 
 with col3:
+    balance_class = (
+        "dashboard-card-income"
+        if balance >= 0
+        else "dashboard-card-expense"
+    )
+
+    balance_label = (
+        "Current Balance"
+        if balance >= 0
+        else "Negative Balance"
+    )
+
     st.markdown(
         f"""
-        <div class="finance-card balance-card">
-            <div class="finance-card-title">
-                Balance
+        <div class="dashboard-card {balance_class}">
+
+            <div class="dashboard-card-label">
+                {balance_label}
             </div>
-            <div class="finance-card-value">
+
+            <div class="dashboard-card-value">
                 ₹{balance:,.2f}
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
@@ -196,28 +252,44 @@ with col3:
 
 
 with col4:
+    savings_class = (
+        "dashboard-card-income"
+        if savings_percentage >= 20
+        else "dashboard-card-savings"
+    )
+
     st.markdown(
         f"""
-        <div class="finance-card savings-card">
-            <div class="finance-card-title">
+        <div class="dashboard-card {savings_class}">
+
+            <div class="dashboard-card-label">
                 Savings Rate
             </div>
-            <div class="finance-card-value">
+
+            <div class="dashboard-card-value">
                 {savings_percentage:.1f}%
             </div>
+
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-# ---------------------------------------------------------
-# Monthly overview
-# ---------------------------------------------------------
+# =========================================================
+# MONTHLY OVERVIEW
+# =========================================================
 
 st.divider()
 
 st.subheader("Monthly Overview")
+
+st.markdown(
+    '<div class="dashboard-section-note">'
+    'Income and expenses by month'
+    '</div>',
+    unsafe_allow_html=True,
+)
 
 
 month_names = [
@@ -308,16 +380,40 @@ monthly_chart = px.bar(
 
 
 monthly_chart.update_layout(
+    height=390,
+
+    plot_bgcolor="white",
+    paper_bgcolor="white",
+
     xaxis_title="",
-    yaxis_title="Amount (₹)",
+    yaxis_title="Amount",
+
     legend_title="",
+
     margin=dict(
         l=10,
         r=10,
         t=20,
         b=10,
     ),
+
     hovermode="x unified",
+
+    font=dict(
+        size=12,
+    ),
+
+    xaxis=dict(
+        showgrid=False,
+        tickfont=dict(size=11),
+    ),
+
+    yaxis=dict(
+        showgrid=True,
+        gridcolor="#eef0f4",
+        tickprefix="₹",
+        tickfont=dict(size=11),
+    ),
 )
 
 
@@ -336,13 +432,20 @@ st.plotly_chart(
 )
 
 
-# ---------------------------------------------------------
-# Recent transactions
-# ---------------------------------------------------------
+# =========================================================
+# RECENT TRANSACTIONS
+# =========================================================
 
 st.divider()
 
 st.subheader("Recent Transactions")
+
+st.markdown(
+    '<div class="dashboard-section-note">'
+    'Your latest five transactions'
+    '</div>',
+    unsafe_allow_html=True,
+)
 
 
 recent_transactions = (
@@ -357,9 +460,7 @@ recent_transactions = (
 
 if recent_transactions.empty:
 
-    st.info(
-        "No transactions available."
-    )
+    st.info("No transactions available.")
 
 else:
 
@@ -383,12 +484,25 @@ else:
         recent_display,
         use_container_width=True,
         hide_index=True,
+        column_config={
+            "Date": "Date",
+            "Description": "Description",
+            "Category": "Category",
+            "Amount": st.column_config.NumberColumn(
+                "Amount",
+                format="₹%.2f",
+            ),
+            "Type": "Type",
+            "Paid to or received from": (
+                "Paid to / Received from"
+            ),
+        },
     )
 
 
-# ---------------------------------------------------------
-# Financial insight
-# ---------------------------------------------------------
+# =========================================================
+# FINANCIAL INSIGHT
+# =========================================================
 
 st.divider()
 
@@ -404,7 +518,7 @@ if total_income <= 0:
         "tracking your savings and financial health."
     )
 
-    insight_class = "expense-card"
+    insight_class = "dashboard-card-expense"
 
 
 elif balance < 0:
@@ -413,11 +527,11 @@ elif balance < 0:
 
     insight_text = (
         "Your current expenses are higher than your income. "
-        "Review your recent spending and consider using "
-        "the Planning section to create a budget."
+        "Review your spending and use Planning to create "
+        "a structured budget."
     )
 
-    insight_class = "expense-card"
+    insight_class = "dashboard-card-expense"
 
 
 elif savings_percentage >= 30:
@@ -426,10 +540,10 @@ elif savings_percentage >= 30:
 
     insight_text = (
         "You are currently saving 30% or more of your income. "
-        "That is a strong position to build long-term financial goals."
+        "Continue building your long-term financial goals."
     )
 
-    insight_class = "income-card"
+    insight_class = "dashboard-card-income"
 
 
 elif savings_percentage >= 20:
@@ -438,11 +552,11 @@ elif savings_percentage >= 20:
 
     insight_text = (
         "Your current savings rate is above 20%. "
-        "Continue tracking your expenses and gradually "
-        "increase your savings where possible."
+        "Continue tracking expenses and gradually "
+        "increase savings where possible."
     )
 
-    insight_class = "balance-card"
+    insight_class = "dashboard-card-balance"
 
 
 elif savings_percentage >= 0:
@@ -455,7 +569,7 @@ elif savings_percentage >= 0:
         "set a structured budget."
     )
 
-    insight_class = "balance-card"
+    insight_class = "dashboard-card-savings"
 
 
 else:
@@ -468,18 +582,21 @@ else:
         "spending can be reduced."
     )
 
-    insight_class = "expense-card"
+    insight_class = "dashboard-card-expense"
 
 
 st.markdown(
     f"""
-    <div class="insight-card {insight_class}">
-        <div class="insight-title">
+    <div class="dashboard-insight">
+
+        <div class="dashboard-insight-title">
             {insight_title}
         </div>
-        <div class="insight-text">
+
+        <div class="dashboard-insight-text">
             {insight_text}
         </div>
+
     </div>
     """,
     unsafe_allow_html=True,
