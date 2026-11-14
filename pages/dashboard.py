@@ -687,20 +687,6 @@ else:
 
     insight_class = "dashboard-card-expense"
 
-
-st.markdown(
-    f"""
-    <div class="dashboard-insight">
-
-        <div class="dashboard-insight-title">
-            {insight_title}
-        </div>
-
-        <div class="dashboard-insight-text">
-            {insight_text}
-        </div>
-
-    </div>
     """,
     unsafe_allow_html=True,
 )
