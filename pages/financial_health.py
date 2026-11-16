@@ -13,9 +13,197 @@ from utils.financial_health import (
 )
 
 
+# ==================================================
+# PAGE CONFIG
+# ==================================================
+
 st.set_page_config(
     page_title="Financial Health",
     layout="wide",
+)
+
+
+# ==================================================
+# CLEAN MODERN UI
+# ==================================================
+
+st.markdown(
+    """
+    <style>
+
+    /* ---------------------------------------------
+       PAGE
+    --------------------------------------------- */
+
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        max-width: 1200px;
+    }
+
+
+    /* ---------------------------------------------
+       SELECTBOX
+    --------------------------------------------- */
+
+    div[data-baseweb="select"] {
+        max-width: 180px;
+    }
+
+
+    /* ---------------------------------------------
+       SCORE HERO
+    --------------------------------------------- */
+
+    .health-hero {
+        padding: 24px 26px;
+        border: 1px solid rgba(128, 128, 128, 0.22);
+        border-radius: 18px;
+        background: rgba(128, 128, 128, 0.06);
+        margin: 12px 0 24px 0;
+    }
+
+
+    .health-score {
+        font-size: 52px;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+
+    .health-label {
+        font-size: 14px;
+        opacity: 0.7;
+        margin-bottom: 14px;
+    }
+
+
+    .health-status {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+
+    .health-description {
+        font-size: 14px;
+        opacity: 0.72;
+    }
+
+
+    /* ---------------------------------------------
+       SCORE CARDS
+    --------------------------------------------- */
+
+    .score-card {
+        padding: 18px;
+        min-height: 125px;
+        border: 1px solid rgba(128, 128, 128, 0.20);
+        border-radius: 15px;
+        background: rgba(128, 128, 128, 0.045);
+        margin-bottom: 12px;
+    }
+
+
+    .score-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+
+    .score-card-value {
+        font-size: 25px;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+
+    .score-card-caption {
+        font-size: 12px;
+        opacity: 0.65;
+        margin-top: 7px;
+    }
+
+
+    /* ---------------------------------------------
+       INSIGHT CARDS
+    --------------------------------------------- */
+
+    .insight-card {
+        padding: 16px 18px;
+        border: 1px solid rgba(128, 128, 128, 0.20);
+        border-radius: 14px;
+        background: rgba(128, 128, 128, 0.045);
+        margin-bottom: 10px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+
+    .insight-title {
+        font-size: 15px;
+        font-weight: 650;
+        margin-bottom: 12px;
+    }
+
+
+    /* ---------------------------------------------
+       POSITION CARDS
+    --------------------------------------------- */
+
+    .position-card {
+        padding: 18px;
+        border: 1px solid rgba(128, 128, 128, 0.20);
+        border-radius: 15px;
+        background: rgba(128, 128, 128, 0.045);
+    }
+
+
+    .position-label {
+        font-size: 12px;
+        opacity: 0.65;
+        margin-bottom: 6px;
+    }
+
+
+    .position-value {
+        font-size: 21px;
+        font-weight: 650;
+    }
+
+
+    /* ---------------------------------------------
+       GOAL ROW
+    --------------------------------------------- */
+
+    .goal-name {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+
+    .goal-caption {
+        font-size: 12px;
+        opacity: 0.65;
+        margin-bottom: 6px;
+    }
+
+
+    /* ---------------------------------------------
+       SECTION SPACING
+    --------------------------------------------- */
+
+    .section-gap {
+        margin-top: 10px;
+        margin-bottom: 8px;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 
@@ -53,28 +241,22 @@ df = df.dropna(
     subset=["Date"]
 )
 
-
-df["Year"] = (
-    df["Date"]
-    .dt.year
-)
+df["Year"] = df["Date"].dt.year
 
 
 # ==================================================
 # HEADER
 # ==================================================
 
-st.title(
-    "Financial Health"
-)
+st.title("Financial Health")
 
 st.caption(
-    "Understand your financial position and the areas that need attention."
+    "A simple view of your financial strength, spending behaviour and progress."
 )
 
 
 # ==================================================
-# YEAR SELECTION
+# YEAR
 # ==================================================
 
 available_years = sorted(
@@ -178,9 +360,7 @@ if spreadsheet is not None:
 
         budget_worksheet = (
             spreadsheet
-            .worksheet(
-                "Budget_Plans"
-            )
+            .worksheet("Budget_Plans")
         )
 
         budget_records = (
@@ -380,26 +560,30 @@ monthly_needs = 0.0
 
 if not expense_df.empty:
 
-    needs_expenses = (
-        expense_df[
-            expense_df["Category"]
-            .fillna("")
-            .astype(str)
-            .str.strip()
-            .map(category_mapping)
-            .fillna("Needs")
-            == "Needs"
-        ]
+    mapped_categories = (
+        expense_df["Category"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .map(category_mapping)
+        .fillna("Needs")
     )
 
-    monthly_needs = (
-        needs_expenses
-        .groupby(
-            needs_expenses["Date"].dt.to_period("M")
-        )["Expense Amount"]
-        .sum()
-        .mean()
-    )
+    needs_expenses = expense_df[
+        mapped_categories == "Needs"
+    ].copy()
+
+
+    if not needs_expenses.empty:
+
+        monthly_needs = (
+            needs_expenses
+            .groupby(
+                needs_expenses["Date"].dt.to_period("M")
+            )["Expense Amount"]
+            .sum()
+            .mean()
+        )
 
 
 if pd.isna(monthly_needs):
@@ -506,7 +690,7 @@ if not goals_df.empty:
 
 
 # ==================================================
-# INVESTMENT AMOUNT
+# INVESTMENT
 # ==================================================
 
 investment_amount = actual.get(
@@ -515,8 +699,21 @@ investment_amount = actual.get(
 )
 
 
+if total_income > 0:
+
+    investment_rate = (
+        investment_amount
+        / total_income
+        * 100
+    )
+
+else:
+
+    investment_rate = 0.0
+
+
 # ==================================================
-# FINANCIAL HEALTH SCORE
+# FINANCIAL HEALTH
 # ==================================================
 
 health = calculate_financial_health(
@@ -533,58 +730,86 @@ health = calculate_financial_health(
 
 
 # ==================================================
-# SCORE HEADER
+# INSIGHTS
 # ==================================================
 
-st.divider()
-
-score_col, status_col = st.columns(
-    [1, 2]
+insights = generate_financial_insights(
+    savings_rate=savings_rate,
+    expense_ratio=expense_ratio,
+    emergency_months=emergency_months,
+    goal_progress=goal_progress,
+    investment_rate=investment_rate,
+    budget_score=health["budget_score"],
 )
 
 
-with score_col:
+# ==================================================
+# SCORE HERO
+# ==================================================
 
-    st.metric(
-        "Financial Health Score",
-        f"{health['total_score']} / 100",
+status = health["status"]
+
+
+if status == "Excellent":
+
+    status_description = (
+        "Your financial position is strong. "
+        "Keep maintaining these habits."
+    )
+
+elif status == "Healthy":
+
+    status_description = (
+        "Your finances are in a healthy range. "
+        "A few improvements can make them stronger."
+    )
+
+elif status == "Moderate":
+
+    status_description = (
+        "Your financial position is moderate. "
+        "There are several areas where you can improve."
+    )
+
+elif status == "Needs Improvement":
+
+    status_description = (
+        "Your finances need some attention. "
+        "Focus on the areas highlighted below."
+    )
+
+else:
+
+    status_description = (
+        "Your current financial position needs attention. "
+        "Start with the most important actions below."
     )
 
 
-with status_col:
+st.markdown(
+    f"""
+    <div class="health-hero">
 
-    status = health["status"]
+        <div class="health-label">
+            Financial Health Score
+        </div>
 
+        <div class="health-score">
+            {health["total_score"]}<span style="font-size:24px;opacity:.45;"> / 100</span>
+        </div>
 
-    if status == "Excellent":
+        <div class="health-status">
+            {status}
+        </div>
 
-        st.success(
-            f"Excellent — {health['total_score']} / 100"
-        )
+        <div class="health-description">
+            {status_description}
+        </div>
 
-    elif status == "Healthy":
-
-        st.success(
-            f"Healthy — {health['total_score']} / 100"
-        )
-
-    elif status == "Moderate":
-
-        st.info(
-            f"Moderate — {health['total_score']} / 100"
-        )
-
-    elif status == "Needs Improvement":
-
-        st.warning(
-            f"Needs Improvement — {health['total_score']} / 100"
-        )
-
-    else:
-
-        st.error(
-            f"Needs Attention — {health['total_score']} / 100"
-        )
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 st.progress(
@@ -596,115 +821,91 @@ st.progress(
 # SCORE BREAKDOWN
 # ==================================================
 
-st.divider()
-
 st.subheader(
-    "Health Score Breakdown"
+    "Score Breakdown"
 )
 
 
-col1, col2, col3 = st.columns(3)
-
-
-with col1:
-
-    st.metric(
+score_cards = [
+    (
         "Savings Rate",
-        f"{health['savings_score']} / 25",
-    )
-
-    st.caption(
-        f"Current savings rate: "
-        f"{savings_rate:.1f}%"
-    )
-
-
-with col2:
-
-    st.metric(
+        health["savings_score"],
+        25,
+        f"{savings_rate:.1f}% of income saved",
+    ),
+    (
         "Expense Control",
-        f"{health['expense_score']} / 20",
-    )
-
-    st.caption(
-        f"Expenses use "
-        f"{expense_ratio:.1f}% of income"
-    )
-
-
-with col3:
-
-    st.metric(
+        health["expense_score"],
+        20,
+        f"{expense_ratio:.1f}% of income spent",
+    ),
+    (
         "Budget Discipline",
-        f"{health['budget_score']} / 20",
-    )
-
-    st.caption(
-        "Based on planned vs actual spending"
-    )
-
-
-col1, col2, col3 = st.columns(3)
-
-
-with col1:
-
-    st.metric(
+        health["budget_score"],
+        20,
+        "Based on planned vs actual spending",
+    ),
+    (
         "Emergency Fund",
-        f"{health['emergency_score']} / 15",
-    )
-
-    if monthly_needs > 0:
-
-        st.caption(
-            f"Estimated coverage: "
-            f"{emergency_months:.1f} months"
-        )
-
-    else:
-
-        st.caption(
-            "Essential monthly expenses are not available yet."
-        )
-
-
-with col2:
-
-    st.metric(
+        health["emergency_score"],
+        15,
+        f"{emergency_months:.1f} months covered",
+    ),
+    (
         "Financial Goals",
-        f"{health['goal_score']} / 10",
-    )
-
-    st.caption(
-        f"Average goal progress: "
-        f"{goal_progress * 100:.1f}%"
-    )
-
-
-with col3:
-
-    st.metric(
+        health["goal_score"],
+        10,
+        f"{goal_progress * 100:.1f}% average progress",
+    ),
+    (
         "Investment Allocation",
-        f"{health['investment_score']} / 10",
-    )
-
-    if total_income > 0:
-
-        investment_rate = (
-            investment_amount
-            / total_income
-            * 100
-        )
-
-    else:
-
-        investment_rate = 0.0
+        health["investment_score"],
+        10,
+        f"{investment_rate:.1f}% allocated",
+    ),
+]
 
 
-    st.caption(
-        f"Investment allocation: "
-        f"{investment_rate:.1f}%"
-    )
+for row_start in range(
+    0,
+    len(score_cards),
+    3,
+):
+
+    columns = st.columns(3)
+
+    for column, card in zip(
+        columns,
+        score_cards[row_start:row_start + 3],
+    ):
+
+        title, score, maximum, caption = card
+
+        with column:
+
+            st.markdown(
+                f"""
+                <div class="score-card">
+
+                    <div class="score-card-title">
+                        {title}
+                    </div>
+
+                    <div class="score-card-value">
+                        {score}
+                        <span style="font-size:14px;opacity:.45;">
+                            / {maximum}
+                        </span>
+                    </div>
+
+                    <div class="score-card-caption">
+                        {caption}
+                    </div>
+
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 # ==================================================
@@ -718,49 +919,68 @@ st.subheader(
 )
 
 
-col1, col2, col3, col4 = st.columns(4)
-
-
-with col1:
-
-    st.metric(
+position_cards = [
+    (
         "Total Received",
         f"₹{total_income:,.2f}",
-    )
-
-
-with col2:
-
-    st.metric(
+    ),
+    (
         "Total Spent",
         f"₹{total_expenses:,.2f}",
-    )
-
-
-with col3:
-
-    st.metric(
+    ),
+    (
         "Net Savings",
         f"₹{net_savings:,.2f}",
-    )
-
-
-with col4:
-
-    st.metric(
+    ),
+    (
         "Emergency Coverage",
         f"{emergency_months:.1f} months",
-    )
+    ),
+]
+
+
+columns = st.columns(4)
+
+
+for column, card in zip(
+    columns,
+    position_cards,
+):
+
+    label, value = card
+
+    with column:
+
+        st.markdown(
+            f"""
+            <div class="position-card">
+
+                <div class="position-label">
+                    {label}
+                </div>
+
+                <div class="position-value">
+                    {value}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 # ==================================================
-# PLANNING SUMMARY
+# BUDGET POSITION
 # ==================================================
 
 st.divider()
 
 st.subheader(
     "Budget Position"
+)
+
+st.caption(
+    "Planned allocation compared with actual spending."
 )
 
 
@@ -794,16 +1014,6 @@ st.bar_chart(
 # INSIGHTS
 # ==================================================
 
-insights = generate_financial_insights(
-    savings_rate=savings_rate,
-    expense_ratio=expense_ratio,
-    emergency_months=emergency_months,
-    goal_progress=goal_progress,
-    investment_rate=investment_rate,
-    budget_score=health["budget_score"],
-)
-
-
 st.divider()
 
 st.subheader(
@@ -811,62 +1021,81 @@ st.subheader(
 )
 
 
-# --------------------------------------------------
-# Strengths
-# --------------------------------------------------
+if (
+    not insights["strengths"]
+    and not insights["attention"]
+    and not insights["actions"]
+):
 
-if insights["strengths"]:
-
-    st.markdown(
-        "**Strong Areas**"
+    st.info(
+        "More financial activity is needed to generate personalised insights."
     )
 
-    for item in insights["strengths"]:
 
-        st.success(
-            item
+else:
+
+    if insights["strengths"]:
+
+        st.markdown(
+            '<div class="insight-title">Strong Areas</div>',
+            unsafe_allow_html=True,
         )
 
+        for item in insights["strengths"]:
 
-# --------------------------------------------------
-# Attention
-# --------------------------------------------------
+            st.markdown(
+                f"""
+                <div class="insight-card">
+                    {item}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-if insights["attention"]:
 
-    st.markdown(
-        "**Needs Attention**"
-    )
+    if insights["attention"]:
 
-    for item in insights["attention"]:
-
-        st.warning(
-            item
+        st.markdown(
+            '<div class="insight-title">Needs Attention</div>',
+            unsafe_allow_html=True,
         )
 
+        for item in insights["attention"]:
 
-# --------------------------------------------------
-# Actions
-# --------------------------------------------------
+            st.markdown(
+                f"""
+                <div class="insight-card">
+                    {item}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-if insights["actions"]:
 
-    st.markdown(
-        "**Recommended Actions**"
-    )
+    if insights["actions"]:
 
-    for index, item in enumerate(
-        insights["actions"],
-        start=1,
-    ):
-
-        st.write(
-            f"{index}. {item}"
+        st.markdown(
+            '<div class="insight-title">Recommended Actions</div>',
+            unsafe_allow_html=True,
         )
+
+        for index, item in enumerate(
+            insights["actions"],
+            start=1,
+        ):
+
+            st.markdown(
+                f"""
+                <div class="insight-card">
+                    <strong>{index}.</strong>&nbsp; {item}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 # ==================================================
-# GOALS SUMMARY
+# GOALS
 # ==================================================
 
 st.divider()
@@ -931,8 +1160,21 @@ else:
         )
 
 
-        st.write(
-            f"**{goal_name}**"
+        st.markdown(
+            f"""
+            <div class="goal-name">
+                {goal_name}
+            </div>
+
+            <div class="goal-caption">
+                ₹{current_saved:,.2f}
+                of
+                ₹{target_amount:,.2f}
+                •
+                {progress * 100:.1f}%
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
 
@@ -941,21 +1183,14 @@ else:
         )
 
 
-        st.caption(
-            f"₹{current_saved:,.2f} "
-            f"of ₹{target_amount:,.2f} "
-            f"• {progress * 100:.1f}%"
-        )
-
-
 # ==================================================
-# FINAL NOTE
+# FOOTER
 # ==================================================
 
 st.divider()
 
 st.caption(
-    f"Financial Health is calculated for {selected_year} "
-    "using your transactions, planning settings, "
-    "budget mapping and financial goals."
+    f"Financial Health for {selected_year} • "
+    "Based on your transactions, budget planning, "
+    "category mapping and financial goals."
 )
