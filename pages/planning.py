@@ -4,6 +4,12 @@ from datetime import date
 
 from utils.data import load_expenses
 from utils.sheets import get_google_sheet
+from utils.planning import (
+    VALID_BUCKETS,
+    calculate_budget_actuals,
+    calculate_planned_amounts,
+    budget_comparison,
+)
 
 
 st.set_page_config(
@@ -33,9 +39,7 @@ except Exception as e:
     st.error(
         "Unable to load financial planning data."
     )
-
     st.exception(e)
-
     st.stop()
 
 
@@ -45,7 +49,6 @@ if df.empty:
         "Add some income and expense transactions "
         "before creating a financial plan."
     )
-
     st.stop()
 
 
@@ -55,21 +58,12 @@ df = df.dropna(
     subset=["Date"]
 )
 
-
-df["Year"] = (
-    df["Date"]
-    .dt.year
-)
-
-
-df["Month Period"] = (
-    df["Date"]
-    .dt.to_period("M")
-)
+df["Year"] = df["Date"].dt.year
+df["Month Period"] = df["Date"].dt.to_period("M")
 
 
 # ==================================================
-# GET OR CREATE BUDGET SHEET
+# BUDGET PLANS SHEET
 # ==================================================
 
 try:
@@ -104,10 +98,90 @@ except Exception as e:
     st.error(
         "Unable to prepare Budget_Plans worksheet."
     )
-
     st.exception(e)
-
     st.stop()
+
+
+# ==================================================
+# BUDGET CATEGORIES SHEET
+# ==================================================
+
+try:
+
+    try:
+
+        category_worksheet = spreadsheet.worksheet(
+            "Budget_Categories"
+        )
+
+    except Exception:
+
+        category_worksheet = spreadsheet.add_worksheet(
+            title="Budget_Categories",
+            rows=1000,
+            cols=2,
+        )
+
+        category_worksheet.append_row(
+            [
+                "Category",
+                "Planning Bucket",
+            ]
+        )
+
+except Exception as e:
+
+    st.error(
+        "Unable to prepare Budget_Categories worksheet."
+    )
+    st.exception(e)
+    st.stop()
+
+
+# ==================================================
+# LOAD CATEGORY MAPPINGS
+# ==================================================
+
+try:
+
+    category_records = (
+        category_worksheet
+        .get_all_records()
+    )
+
+except Exception as e:
+
+    st.error(
+        "Unable to load category mappings."
+    )
+    st.exception(e)
+    st.stop()
+
+
+category_mapping = {}
+
+for record in category_records:
+
+    category = str(
+        record.get(
+            "Category",
+            "",
+        )
+    ).strip()
+
+    bucket = str(
+        record.get(
+            "Planning Bucket",
+            "",
+        )
+    ).strip()
+
+    if (
+        category
+        and bucket in VALID_BUCKETS
+    ):
+
+        category_mapping[category] = bucket
 
 
 # ==================================================
@@ -135,6 +209,70 @@ year_df = df[
 ].copy()
 
 
+if year_df.empty:
+
+    st.info(
+        "No transactions found for the selected year."
+    )
+    st.stop()
+
+
+# ==================================================
+# FINANCIAL POSITION
+# ==================================================
+
+total_income = year_df.loc[
+    year_df["Type"] == "Income",
+    "Amount",
+].sum()
+
+
+total_expenses = year_df.loc[
+    year_df["Type"] == "Expense",
+    "Expense Amount",
+].sum()
+
+
+actual_savings = (
+    total_income
+    - total_expenses
+)
+
+
+st.divider()
+
+st.subheader(
+    f"Financial Position — {selected_year}"
+)
+
+
+col1, col2, col3 = st.columns(3)
+
+
+with col1:
+
+    st.metric(
+        "Income",
+        f"₹{total_income:,.2f}",
+    )
+
+
+with col2:
+
+    st.metric(
+        "Expenses",
+        f"₹{total_expenses:,.2f}",
+    )
+
+
+with col3:
+
+    st.metric(
+        "Savings",
+        f"₹{actual_savings:,.2f}",
+    )
+
+
 # ==================================================
 # LOAD SAVED PLAN
 # ==================================================
@@ -142,7 +280,8 @@ year_df = df[
 try:
 
     budget_records = (
-        budget_worksheet.get_all_records()
+        budget_worksheet
+        .get_all_records()
     )
 
 except Exception as e:
@@ -150,9 +289,7 @@ except Exception as e:
     st.error(
         "Unable to load saved planning settings."
     )
-
     st.exception(e)
-
     st.stop()
 
 
@@ -183,13 +320,8 @@ for record in budget_records:
     if record_year == selected_year:
 
         saved_plan = record
-
         break
 
-
-# ==================================================
-# DEFAULT / SAVED VALUES
-# ==================================================
 
 if saved_plan:
 
@@ -244,41 +376,13 @@ else:
 
 
 # ==================================================
-# ACTUAL FINANCIAL POSITION
-# ==================================================
-
-total_income = year_df.loc[
-    year_df["Type"] == "Income",
-    "Amount",
-].sum()
-
-
-total_expenses = year_df.loc[
-    year_df["Type"] == "Expense",
-    "Expense Amount",
-].sum()
-
-
-actual_savings = (
-    total_income
-    - total_expenses
-)
-
-
-# ==================================================
-# PLANNING SETTINGS
+# BUDGET ALLOCATION
 # ==================================================
 
 st.divider()
 
 st.subheader(
     "Budget Allocation"
-)
-
-
-st.caption(
-    "Set how you want to divide your income "
-    "between Needs, Investments and Lifestyle."
 )
 
 
@@ -325,44 +429,33 @@ total_percentage = (
 )
 
 
-if total_percentage != 100:
+if abs(
+    total_percentage - 100
+) > 0.001:
 
     st.warning(
-        f"Your allocation currently totals "
+        f"Allocation currently totals "
         f"{total_percentage:.1f}%. "
-        "It should total 100%."
+        "It must total 100%."
     )
 
 
 # ==================================================
-# PLANNED RUPEE ALLOCATION
+# PLANNED AMOUNTS
 # ==================================================
+
+planned = calculate_planned_amounts(
+    total_income,
+    needs_percent,
+    investment_percent,
+    lifestyle_percent,
+)
+
 
 st.divider()
 
 st.subheader(
     "Planned Budget"
-)
-
-
-planned_needs = (
-    total_income
-    * needs_percent
-    / 100
-)
-
-
-planned_investment = (
-    total_income
-    * investment_percent
-    / 100
-)
-
-
-planned_lifestyle = (
-    total_income
-    * lifestyle_percent
-    / 100
 )
 
 
@@ -373,15 +466,15 @@ with col1:
 
     st.metric(
         "Planned Needs",
-        f"₹{planned_needs:,.2f}",
+        f"₹{planned['Needs']:,.2f}",
     )
 
 
 with col2:
 
     st.metric(
-        "Planned Investments",
-        f"₹{planned_investment:,.2f}",
+        "Planned Investment",
+        f"₹{planned['Investment']:,.2f}",
     )
 
 
@@ -389,77 +482,201 @@ with col3:
 
     st.metric(
         "Planned Lifestyle",
-        f"₹{planned_lifestyle:,.2f}",
+        f"₹{planned['Lifestyle']:,.2f}",
     )
 
 
 # ==================================================
-# CATEGORY CLASSIFICATION
+# CATEGORY MAPPING
 # ==================================================
 
-def classify_category(category):
+st.divider()
 
-    category = str(
-        category
-    ).strip().lower()
+st.subheader(
+    "Category Mapping"
+)
+
+st.caption(
+    "Assign each expense category to Needs, "
+    "Investment or Lifestyle. This mapping is "
+    "used by Planning and Dashboard."
+)
 
 
-    investment_keywords = [
-        "investment",
-        "investments",
-        "sip",
-        "mutual fund",
-        "mutual funds",
-        "stocks",
-        "shares",
-        "equity",
-        "ppf",
-        "pf",
-        "epf",
-        "nps",
-        "fd",
-        "fixed deposit",
-        "rd",
-        "recurring deposit",
+all_categories = sorted(
+    year_df[
+        year_df["Type"] == "Expense"
+    ]["Category"]
+    .dropna()
+    .astype(str)
+    .str.strip()
+    .loc[
+        lambda x: x != ""
     ]
+    .unique()
+    .tolist()
+)
 
 
-    lifestyle_keywords = [
-        "shopping",
-        "entertainment",
-        "travel",
-        "restaurant",
-        "dining",
-        "food",
-        "movies",
-        "hobbies",
-        "luxury",
-        "subscription",
-        "subscriptions",
-        "leisure",
-        "gaming",
-    ]
+if not all_categories:
+
+    st.info(
+        "No expense categories are available "
+        "for mapping yet."
+    )
+
+else:
+
+    mapping_rows = []
 
 
-    for keyword in investment_keywords:
+    for category in all_categories:
 
-        if keyword in category:
+        current_bucket = (
+            category_mapping.get(
+                category,
+                "Needs",
+            )
+        )
 
-            return "Investment"
+        mapping_rows.append(
+            {
+                "Category": category,
+                "Planning Bucket": current_bucket,
+            }
+        )
 
 
-    for keyword in lifestyle_keywords:
-
-        if keyword in category:
-
-            return "Lifestyle"
+    mapping_df = pd.DataFrame(
+        mapping_rows
+    )
 
 
-    return "Needs"
+    edited_mapping = st.data_editor(
+        mapping_df,
+        use_container_width=True,
+        hide_index=True,
+        num_rows="fixed",
+        disabled=["Category"],
+        column_config={
+
+            "Category": st.column_config.TextColumn(
+                "Category",
+                disabled=True,
+            ),
+
+            "Planning Bucket":
+                st.column_config.SelectboxColumn(
+                    "Planning Bucket",
+                    options=VALID_BUCKETS,
+                    required=True,
+                ),
+        },
+        key="budget_category_mapping",
+    )
+
+
+    if st.button(
+        "Save Category Mapping",
+        type="primary",
+    ):
+
+        try:
+
+            existing_records = (
+                category_worksheet
+                .get_all_records()
+            )
+
+
+            existing_rows = {}
+
+            for row_number, record in enumerate(
+                existing_records,
+                start=2,
+            ):
+
+                category = str(
+                    record.get(
+                        "Category",
+                        "",
+                    )
+                ).strip()
+
+                if category:
+
+                    existing_rows[
+                        category
+                    ] = row_number
+
+
+            saved_count = 0
+
+
+            for _, row in edited_mapping.iterrows():
+
+                category = str(
+                    row["Category"]
+                ).strip()
+
+                bucket = str(
+                    row["Planning Bucket"]
+                ).strip()
+
+
+                if (
+                    not category
+                    or bucket not in VALID_BUCKETS
+                ):
+
+                    continue
+
+
+                if category in existing_rows:
+
+                    row_number = existing_rows[
+                        category
+                    ]
+
+                    category_worksheet.update(
+                        f"A{row_number}:B{row_number}",
+                        [[
+                            category,
+                            bucket,
+                        ]],
+                    )
+
+                else:
+
+                    category_worksheet.append_row(
+                        [
+                            category,
+                            bucket,
+                        ]
+                    )
+
+
+                saved_count += 1
+
+
+            st.success(
+                f"{saved_count} category mapping(s) saved."
+            )
+
+            st.rerun()
+
+
+        except Exception as e:
+
+            st.error(
+                "Unable to save category mappings."
+            )
+
+            st.exception(e)
 
 
 # ==================================================
-# ACTUAL PLANNING BUCKETS
+# ACTUAL BUDGET SPENDING
 # ==================================================
 
 expense_df = year_df[
@@ -467,44 +684,17 @@ expense_df = year_df[
 ].copy()
 
 
-if not expense_df.empty:
-
-    expense_df["Planning Bucket"] = (
-        expense_df["Category"]
-        .apply(
-            classify_category
-        )
-    )
-
-else:
-
-    expense_df["Planning Bucket"] = []
+actual = calculate_budget_actuals(
+    expense_df,
+    category_mapping,
+)
 
 
-actual_needs = expense_df.loc[
-    expense_df["Planning Bucket"]
-    == "Needs",
-    "Expense Amount",
-].sum()
+comparison_df = budget_comparison(
+    planned,
+    actual,
+)
 
-
-actual_investments = expense_df.loc[
-    expense_df["Planning Bucket"]
-    == "Investment",
-    "Expense Amount",
-].sum()
-
-
-actual_lifestyle = expense_df.loc[
-    expense_df["Planning Bucket"]
-    == "Lifestyle",
-    "Expense Amount",
-].sum()
-
-
-# ==================================================
-# ACTUAL VS PLANNED
-# ==================================================
 
 st.divider()
 
@@ -513,40 +703,29 @@ st.subheader(
 )
 
 
-comparison_df = pd.DataFrame(
-    {
-        "Category": [
-            "Needs",
-            "Investments",
-            "Lifestyle",
-        ],
-        "Planned": [
-            planned_needs,
-            planned_investment,
-            planned_lifestyle,
-        ],
-        "Actual": [
-            actual_needs,
-            actual_investments,
-            actual_lifestyle,
-        ],
-    }
-)
+display_comparison = comparison_df.copy()
 
 
-comparison_df["Difference"] = (
-    comparison_df["Planned"]
-    - comparison_df["Actual"]
+display_comparison["Status"] = (
+    display_comparison["Difference"]
+    .apply(
+        lambda value:
+        "Remaining"
+        if value >= 0
+        else "Over Budget"
+    )
 )
 
 
 st.dataframe(
-    comparison_df,
+    display_comparison,
     use_container_width=True,
     hide_index=True,
     column_config={
 
-        "Category": "Category",
+        "Category": st.column_config.TextColumn(
+            "Category",
+        ),
 
         "Planned": st.column_config.NumberColumn(
             "Planned",
@@ -559,8 +738,12 @@ st.dataframe(
         ),
 
         "Difference": st.column_config.NumberColumn(
-            "Remaining",
+            "Difference",
             format="₹%.2f",
+        ),
+
+        "Status": st.column_config.TextColumn(
+            "Status",
         ),
     },
 )
@@ -575,84 +758,27 @@ st.subheader(
 )
 
 
-budget_items = [
-    (
-        "Needs",
-        planned_needs,
-        actual_needs,
-    ),
-    (
-        "Investments",
-        planned_investment,
-        actual_investments,
-    ),
-    (
-        "Lifestyle",
-        planned_lifestyle,
-        actual_lifestyle,
-    ),
-]
+for _, row in comparison_df.iterrows():
 
-
-for name, planned, actual in budget_items:
-
-    difference = (
-        planned
-        - actual
+    bucket = row["Category"]
+    difference = float(
+        row["Difference"]
     )
 
 
     if difference >= 0:
 
         st.success(
-            f"{name}: ₹{difference:,.2f} "
-            "remaining in planned allocation."
+            f"{bucket}: "
+            f"₹{difference:,.2f} remaining."
         )
 
     else:
 
         st.warning(
-            f"{name}: ₹{abs(difference):,.2f} "
-            "over planned allocation."
+            f"{bucket}: "
+            f"₹{abs(difference):,.2f} over budget."
         )
-
-
-# ==================================================
-# SAVINGS POSITION
-# ==================================================
-
-st.divider()
-
-st.subheader(
-    "Savings Position"
-)
-
-
-col1, col2, col3 = st.columns(3)
-
-
-with col1:
-
-    st.metric(
-        "Actual Income",
-        f"₹{total_income:,.2f}",
-    )
-
-
-with col2:
-
-    st.metric(
-        "Actual Expenses",
-        f"₹{total_expenses:,.2f}",
-    )
-
-
-with col3:
-
-    st.metric(
-        "Actual Savings",
-        f"₹{actual_savings:,.2f}",
-    )
 
 
 # ==================================================
@@ -687,10 +813,6 @@ goal_target_date = st.date_input(
     value=date.today(),
 )
 
-
-# ==================================================
-# GOAL CALCULATION
-# ==================================================
 
 required_monthly_saving = 0.0
 
@@ -749,44 +871,48 @@ with col2:
 
 
 # ==================================================
-# GOAL FUNDING CAPACITY
+# AVERAGE MONTHLY SAVING
 # ==================================================
 
-if goal_amount > 0:
+monthly_income = (
+    year_df[
+        year_df["Type"] == "Income"
+    ]
+    .groupby("Month Period")["Amount"]
+    .sum()
+)
 
-    average_monthly_savings = (
-        year_df
-        .assign(
-            MonthPeriod=
-            year_df["Date"].dt.to_period("M")
-        )
-        .groupby("MonthPeriod")
-        .apply(
-            lambda group:
-            group.loc[
-                group["Type"] == "Income",
-                "Amount",
-            ].sum()
-            -
-            group.loc[
-                group["Type"] == "Expense",
-                "Expense Amount",
-            ].sum(),
-            include_groups=False,
-        )
+
+monthly_expenses = (
+    year_df[
+        year_df["Type"] == "Expense"
+    ]
+    .groupby("Month Period")["Expense Amount"]
+    .sum()
+)
+
+
+monthly_savings = (
+    monthly_income
+    .sub(
+        monthly_expenses,
+        fill_value=0,
+    )
+)
+
+
+if not monthly_savings.empty:
+
+    average_monthly_saving = (
+        monthly_savings.mean()
     )
 
+else:
 
-    if not average_monthly_savings.empty:
+    average_monthly_saving = 0.0
 
-        average_monthly_saving = (
-            average_monthly_savings.mean()
-        )
 
-    else:
-
-        average_monthly_saving = 0.0
-
+if goal_amount > 0:
 
     st.metric(
         "Average Monthly Saving",
@@ -801,7 +927,7 @@ if goal_amount > 0:
 
         st.success(
             "Your current average monthly savings "
-            "are sufficient for this goal timeline."
+            "support this goal timeline."
         )
 
     else:
@@ -810,7 +936,6 @@ if goal_amount > 0:
             required_monthly_saving
             - average_monthly_saving
         )
-
 
         st.warning(
             f"You need approximately "
@@ -825,15 +950,9 @@ if goal_amount > 0:
 
 st.divider()
 
-st.subheader(
-    "Save Planning"
-)
-
-
 if st.button(
     "Save / Update Planning",
     type="primary",
-    use_container_width=True,
 ):
 
     if abs(
@@ -842,7 +961,7 @@ if st.button(
 
         st.error(
             "Needs, Investment and Lifestyle "
-            "percentages must total exactly 100%."
+            "must total exactly 100%."
         )
 
         st.stop()
@@ -961,71 +1080,39 @@ st.subheader(
 if total_income <= 0:
 
     st.warning(
-        "Add income transactions to create a "
-        "meaningful financial plan."
+        "Add income transactions to create "
+        "a meaningful financial plan."
     )
 
-else:
+elif actual_savings < 0:
 
-    if actual_savings > 0:
+    st.error(
+        f"Expenses are ₹{abs(actual_savings):,.2f} "
+        "higher than income for this year."
+    )
+
+elif goal_amount > 0:
+
+    if (
+        average_monthly_saving
+        >= required_monthly_saving
+    ):
 
         st.success(
-            f"You currently have "
-            f"₹{actual_savings:,.2f} of net savings "
-            f"for {selected_year}."
+            "Your current savings pattern supports "
+            "your planned goal timeline."
         )
 
     else:
 
         st.warning(
-            "Your current expenses are equal to or "
-            "higher than your income."
+            "Your current savings pattern may require "
+            "higher monthly savings or a longer goal timeline."
         )
 
+else:
 
-    if actual_lifestyle > planned_lifestyle:
-
-        st.warning(
-            "Lifestyle spending is currently above "
-            "your planned allocation."
-        )
-
-
-    if actual_needs > planned_needs:
-
-        st.warning(
-            "Needs spending is currently above "
-            "your planned allocation."
-        )
-
-
-    if actual_investments < planned_investment:
-
-        st.info(
-            "Your actual investment-related spending "
-            "is below your planned investment allocation."
-        )
-
-
-    if (
-        goal_amount > 0
-        and
-        required_monthly_saving > 0
-    ):
-
-        if (
-            average_monthly_saving
-            >= required_monthly_saving
-        ):
-
-            st.success(
-                "Your current savings pattern supports "
-                "your planned goal timeline."
-            )
-
-        else:
-
-            st.warning(
-                "Your current savings pattern may require "
-                "higher monthly savings or a longer goal timeline."
-            )
+    st.info(
+        "Create a savings goal to compare your "
+        "savings capacity with a target."
+    )
