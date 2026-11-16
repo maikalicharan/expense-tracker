@@ -1,343 +1,61 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 
 from utils.data import load_expenses
-from utils.calculations import calculate_summary
 from utils.sheets import get_google_sheet
 
 
-# =========================================================
-# PAGE
-# =========================================================
-
-st.title("Dashboard")
-st.caption("Your financial overview")
+st.set_page_config(
+    page_title="Dashboard",
+    layout="wide",
+)
 
 
-# =========================================================
-# LOAD DATA
-# =========================================================
+# ==================================================
+# LOAD TRANSACTION DATA
+# ==================================================
 
 try:
-
     df = load_expenses()
-    summary = calculate_summary(df)
 
 except Exception as e:
-
     st.error("Unable to load dashboard data.")
     st.exception(e)
     st.stop()
 
 
 if df.empty:
-
     st.info(
-        "No transactions found yet. "
-        "Add your first transaction to see your dashboard."
+        "No transactions available yet. "
+        "Add your first transaction from Add Transaction."
     )
-
     st.stop()
 
 
-total_income = summary["total_income"]
-total_expenses = summary["total_expenses"]
-balance = summary["balance"]
-savings_percentage = summary["savings_percentage"]
+df = df.copy()
 
-
-# =========================================================
-# CURRENT THEME
-# =========================================================
-
-theme = st.session_state.get(
-    "theme",
-    "Light",
+df = df.dropna(
+    subset=["Date"]
 )
 
-is_dark = theme == "Dark"
+df["Year"] = df["Date"].dt.year
+df["Month"] = df["Date"].dt.month
+df["Month Period"] = df["Date"].dt.to_period("M")
 
 
-# =========================================================
-# DASHBOARD STYLES
-# =========================================================
+# ==================================================
+# HEADER
+# ==================================================
 
-if is_dark:
+st.title("Dashboard")
+st.caption(
+    "Your financial overview and planning summary"
+)
 
-    st.markdown(
-        """
-        <style>
 
-        /* =================================================
-           DARK DASHBOARD
-        ================================================= */
-
-        .dashboard-section {
-            color: #f3f4f6;
-        }
-
-
-        /* =================================================
-           METRIC CARDS
-        ================================================= */
-
-        .st-key-income_card [data-testid="stMetric"] {
-            background-color: #123b27 !important;
-            border: 1px solid #2e8b57 !important;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        .st-key-income_card [data-testid="stMetricLabel"] {
-            color: #8ee0ad !important;
-        }
-
-        .st-key-income_card [data-testid="stMetricValue"] {
-            color: #b8f2cb !important;
-        }
-
-
-        .st-key-expense_card [data-testid="stMetric"] {
-            background-color: #421f24 !important;
-            border: 1px solid #a84450 !important;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        .st-key-expense_card [data-testid="stMetricLabel"] {
-            color: #f09aa2 !important;
-        }
-
-        .st-key-expense_card [data-testid="stMetricValue"] {
-            color: #ffc0c6 !important;
-        }
-
-
-        .st-key-balance_card [data-testid="stMetric"] {
-            background-color: #172f52 !important;
-            border: 1px solid #3978c5 !important;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        .st-key-balance_card [data-testid="stMetricLabel"] {
-            color: #8eb9ed !important;
-        }
-
-        .st-key-balance_card [data-testid="stMetricValue"] {
-            color: #b9d8ff !important;
-        }
-
-
-        .st-key-savings_card [data-testid="stMetric"] {
-            background-color: #30214f !important;
-            border: 1px solid #7955b8 !important;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
-        }
-
-        .st-key-savings_card [data-testid="stMetricLabel"] {
-            color: #c3a9f2 !important;
-        }
-
-        .st-key-savings_card [data-testid="stMetricValue"] {
-            color: #dfccff !important;
-        }
-
-
-        /* =================================================
-           TABLE CONTAINER
-        ================================================= */
-
-        .st-key-recent_transactions {
-            background-color: #111827 !important;
-            border: 1px solid #334155 !important;
-            border-radius: 10px;
-            padding: 0.35rem;
-        }
-
-
-        /* =================================================
-           INSIGHT
-        ================================================= */
-
-        .st-key-financial_insight {
-            background-color: #172033 !important;
-            border: 1px solid #34445f !important;
-            border-radius: 12px;
-            padding: 1rem 1.1rem;
-            color: #e5e7eb !important;
-        }
-
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-else:
-
-    st.markdown(
-        """
-        <style>
-
-        /* =================================================
-           LIGHT DASHBOARD
-        ================================================= */
-
-        .st-key-income_card [data-testid="stMetric"] {
-            background-color: #e8f7ee !important;
-            border: 1px solid #b9e5c9 !important;
-            box-shadow: 0 3px 12px rgba(20, 25, 40, 0.05);
-        }
-
-        .st-key-income_card [data-testid="stMetricLabel"] {
-            color: #237346 !important;
-        }
-
-        .st-key-income_card [data-testid="stMetricValue"] {
-            color: #176b3b !important;
-        }
-
-
-        .st-key-expense_card [data-testid="stMetric"] {
-            background-color: #fff0ef !important;
-            border: 1px solid #f0c4c1 !important;
-            box-shadow: 0 3px 12px rgba(20, 25, 40, 0.05);
-        }
-
-        .st-key-expense_card [data-testid="stMetricLabel"] {
-            color: #a54845 !important;
-        }
-
-        .st-key-expense_card [data-testid="stMetricValue"] {
-            color: #a52f2f !important;
-        }
-
-
-        .st-key-balance_card [data-testid="stMetric"] {
-            background-color: #eaf2ff !important;
-            border: 1px solid #c4d7f5 !important;
-            box-shadow: 0 3px 12px rgba(20, 25, 40, 0.05);
-        }
-
-        .st-key-balance_card [data-testid="stMetricLabel"] {
-            color: #315f9f !important;
-        }
-
-        .st-key-balance_card [data-testid="stMetricValue"] {
-            color: #245ca8 !important;
-        }
-
-
-        .st-key-savings_card [data-testid="stMetric"] {
-            background-color: #f3edff !important;
-            border: 1px solid #d7c8f2 !important;
-            box-shadow: 0 3px 12px rgba(20, 25, 40, 0.05);
-        }
-
-        .st-key-savings_card [data-testid="stMetricLabel"] {
-            color: #6540a8 !important;
-        }
-
-        .st-key-savings_card [data-testid="stMetricValue"] {
-            color: #5834a0 !important;
-        }
-
-
-        .st-key-recent_transactions {
-            background-color: #ffffff !important;
-            border: 1px solid #e3e6ec !important;
-            border-radius: 10px;
-            padding: 0.35rem;
-        }
-
-
-        .st-key-financial_insight {
-            background-color: #ffffff !important;
-            border: 1px solid #e2e5eb !important;
-            border-radius: 12px;
-            padding: 1rem 1.1rem;
-        }
-
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-# =========================================================
-# FINANCIAL OVERVIEW
-# =========================================================
-
-st.subheader("Financial Overview")
-
-
-col1, col2, col3, col4 = st.columns(4)
-
-
-with col1:
-
-    with st.container(key="income_card"):
-
-        st.metric(
-            "Total Income",
-            f"₹{total_income:,.2f}",
-        )
-
-
-with col2:
-
-    with st.container(key="expense_card"):
-
-        st.metric(
-            "Total Expenses",
-            f"₹{total_expenses:,.2f}",
-        )
-
-
-with col3:
-
-    with st.container(key="balance_card"):
-
-        st.metric(
-            "Current Balance",
-            f"₹{balance:,.2f}",
-        )
-
-
-with col4:
-
-    with st.container(key="savings_card"):
-
-        st.metric(
-            "Savings Rate",
-            f"{savings_percentage:.1f}%",
-        )
-
-
-# =========================================================
-# MONTHLY OVERVIEW
-# =========================================================
-
-st.divider()
-
-st.subheader("Monthly Overview")
-
-st.caption("Income and expenses by month")
-
-
-month_names = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-]
-
+# ==================================================
+# YEAR SELECTION
+# ==================================================
 
 available_years = sorted(
     df["Year"]
@@ -360,10 +78,91 @@ year_df = df[
 ].copy()
 
 
-all_month_values = [
-    f"{selected_year}-{month:02d}"
-    for month in range(1, 13)
-]
+if year_df.empty:
+    st.info(
+        "No transactions found for the selected year."
+    )
+    st.stop()
+
+
+# ==================================================
+# CORE FINANCIAL NUMBERS
+# ==================================================
+
+total_income = year_df.loc[
+    year_df["Type"] == "Income",
+    "Amount",
+].sum()
+
+
+total_expenses = year_df.loc[
+    year_df["Type"] == "Expense",
+    "Expense Amount",
+].sum()
+
+
+net_savings = (
+    total_income
+    - total_expenses
+)
+
+
+if total_income > 0:
+    savings_rate = (
+        net_savings
+        / total_income
+        * 100
+    )
+else:
+    savings_rate = 0
+
+
+# ==================================================
+# FINANCIAL OVERVIEW
+# ==================================================
+
+st.divider()
+
+col1, col2, col3, col4 = st.columns(4)
+
+
+with col1:
+    st.metric(
+        "Total Received",
+        f"₹{total_income:,.2f}",
+    )
+
+
+with col2:
+    st.metric(
+        "Total Spent",
+        f"₹{total_expenses:,.2f}",
+    )
+
+
+with col3:
+    st.metric(
+        "Net Savings",
+        f"₹{net_savings:,.2f}",
+    )
+
+
+with col4:
+    st.metric(
+        "Savings Rate",
+        f"{savings_rate:.1f}%",
+    )
+
+
+# ==================================================
+# MONTHLY CASH FLOW
+# ==================================================
+
+st.divider()
+
+st.subheader(
+    f"Monthly Cash Flow — {selected_year}"
+)
 
 
 monthly_income = (
@@ -372,10 +171,6 @@ monthly_income = (
     ]
     .groupby("Month")["Amount"]
     .sum()
-    .reindex(
-        all_month_values,
-        fill_value=0,
-    )
 )
 
 
@@ -385,405 +180,390 @@ monthly_expenses = (
     ]
     .groupby("Month")["Expense Amount"]
     .sum()
-    .reindex(
-        all_month_values,
-        fill_value=0,
-    )
 )
 
 
-monthly_overview = pd.DataFrame(
+month_labels = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
+
+
+monthly_chart = pd.DataFrame(
     {
-        "Month": month_names,
-        "Income": monthly_income.values,
-        "Expenses": monthly_expenses.values,
-    }
+        "Received": [
+            monthly_income.get(
+                month,
+                0,
+            )
+            for month in range(1, 13)
+        ],
+        "Spent": [
+            monthly_expenses.get(
+                month,
+                0,
+            )
+            for month in range(1, 13)
+        ],
+    },
+    index=month_labels,
 )
 
 
-monthly_chart = px.bar(
-    monthly_overview,
-    x="Month",
-    y=["Income", "Expenses"],
-    barmode="group",
-)
-
-
-# =========================================================
-# CHART COLORS
-# =========================================================
-
-income_bar_color = "#35B96F"
-expense_bar_color = "#E45B61"
-
-
-monthly_chart.update_traces(
-    marker_line_width=0,
-)
-
-
-monthly_chart.update_traces(
-    marker_color=income_bar_color,
-    selector={"name": "Income"},
-)
-
-
-monthly_chart.update_traces(
-    marker_color=expense_bar_color,
-    selector={"name": "Expenses"},
-)
-
-
-# =========================================================
-# CHART THEME
-# =========================================================
-
-if is_dark:
-
-    chart_background = "#0f172a"
-    chart_text = "#d1d5db"
-    chart_grid = "#334155"
-
-else:
-
-    chart_background = "#ffffff"
-    chart_text = "#555c69"
-    chart_grid = "#eef0f4"
-
-
-monthly_chart.update_layout(
-    height=390,
-
-    plot_bgcolor=chart_background,
-    paper_bgcolor=chart_background,
-
-    xaxis_title="",
-    yaxis_title="Amount",
-
-    legend_title="",
-
-    margin=dict(
-        l=10,
-        r=10,
-        t=20,
-        b=10,
-    ),
-
-    hovermode="x unified",
-
-    font=dict(
-        size=12,
-        color=chart_text,
-    ),
-
-    legend=dict(
-        font=dict(
-            color=chart_text,
-        ),
-    ),
-
-    xaxis=dict(
-        showgrid=False,
-        tickfont=dict(
-            size=11,
-            color=chart_text,
-        ),
-        linecolor=chart_grid,
-    ),
-
-    yaxis=dict(
-        showgrid=True,
-        gridcolor=chart_grid,
-        tickfont=dict(
-            size=11,
-            color=chart_text,
-        ),
-        linecolor=chart_grid,
-    ),
-)
-
-
-monthly_chart.update_traces(
-    hovertemplate=(
-        "<b>%{x}</b>"
-        "<br>₹%{y:,.2f}"
-        "<extra></extra>"
-    )
-)
-
-
-st.plotly_chart(
+st.bar_chart(
     monthly_chart,
-    use_container_width=True,
 )
 
 
-# =========================================================
-# RECENT TRANSACTIONS
-# =========================================================
+# ==================================================
+# BUDGET SUMMARY
+# ==================================================
 
 st.divider()
 
-st.subheader("Recent Transactions")
-
-st.caption("Your latest five transactions")
-
-
-recent_transactions = (
-    df.sort_values(
-        "Date",
-        ascending=False,
-    )
-    .head(5)
-    .copy()
-)
-
-
-if recent_transactions.empty:
-
-    st.info(
-        "No transactions available."
-    )
-
-else:
-
-    recent_transactions["Date"] = (
-        recent_transactions["Date"]
-        .dt.strftime("%d/%m/%Y")
-    )
-
-
-    recent_display = recent_transactions[
-        [
-            "Date",
-            "Description",
-            "Category",
-            "Amount",
-            "Type",
-            "Paid to or received from",
-        ]
-    ].copy()
-
-
-    # =====================================================
-    # TABLE COLORS
-    # =====================================================
-
-    if is_dark:
-
-        table_background = "#111827"
-        table_text = "#e5e7eb"
-        table_header = "#1e293b"
-        table_border = "#334155"
-
-    else:
-
-        table_background = "#ffffff"
-        table_text = "#303642"
-        table_header = "#f3f5f8"
-        table_border = "#e3e6ec"
-
-
-    styled_table = (
-        recent_display.style
-        .set_properties(
-            **{
-                "background-color": table_background,
-                "color": table_text,
-                "border-color": table_border,
-            }
-        )
-        .set_table_styles(
-            [
-                {
-                    "selector": "th",
-                    "props": [
-                        (
-                            "background-color",
-                            table_header,
-                        ),
-                        (
-                            "color",
-                            table_text,
-                        ),
-                        (
-                            "font-weight",
-                            "600",
-                        ),
-                        (
-                            "border-color",
-                            table_border,
-                        ),
-                    ],
-                },
-                {
-                    "selector": "td",
-                    "props": [
-                        (
-                            "border-color",
-                            table_border,
-                        ),
-                    ],
-                },
-            ]
-        )
-    )
-
-
-    with st.container(
-        key="recent_transactions"
-    ):
-
-        st.dataframe(
-            styled_table,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                "Date": "Date",
-                "Description": "Description",
-                "Category": "Category",
-                "Amount": st.column_config.NumberColumn(
-                    "Amount",
-                    format="₹%.2f",
-                ),
-                "Type": "Type",
-                "Paid to or received from": (
-                    "Paid to / Received from"
-                ),
-            },
-        )
-
-
-# =========================================================
-# FINANCIAL INSIGHT
-# =========================================================
-
-st.divider()
-
-st.subheader("Financial Insight")
-
-
-if total_income <= 0:
-
-    insight_title = "Income Required"
-
-    insight_text = (
-        "Add your income transactions to start "
-        "tracking your savings and financial health."
-    )
-
-    insight_type = "warning"
-
-
-elif balance < 0:
-
-    insight_title = "Spending Is Higher Than Income"
-
-    insight_text = (
-        "Your current expenses are higher than your income. "
-        "Review your spending and use Planning to create "
-        "a structured budget."
-    )
-
-    insight_type = "error"
-
-
-elif savings_percentage >= 30:
-
-    insight_title = "Strong Savings Rate"
-
-    insight_text = (
-        "You are currently saving 30% or more of your income. "
-        "Continue building your long-term financial goals."
-    )
-
-    insight_type = "success"
-
-
-elif savings_percentage >= 20:
-
-    insight_title = "Good Savings Progress"
-
-    insight_text = (
-        "Your current savings rate is above 20%. "
-        "Continue tracking expenses and gradually "
-        "increase savings where possible."
-    )
-
-    insight_type = "info"
-
-
-else:
-
-    insight_title = "Room to Improve"
-
-    insight_text = (
-        "You are saving some money, but there may be room "
-        "to improve your savings rate. Use Planning to "
-        "set a structured budget."
-    )
-
-    insight_type = "info"
-
-
-# =========================================================
-# INSIGHT CARD
-# =========================================================
-
-with st.container(
-    key="financial_insight"
-):
-
-    if insight_type == "success":
-
-        st.success(
-            f"**{insight_title}**\n\n"
-            f"{insight_text}"
-        )
-
-    elif insight_type == "error":
-
-        st.error(
-            f"**{insight_title}**\n\n"
-            f"{insight_text}"
-        )
-
-    elif insight_type == "warning":
-
-        st.warning(
-            f"**{insight_title}**\n\n"
-            f"{insight_text}"
-        )
-
-    else:
-
-        st.info(
-            f"**{insight_title}**\n\n"
-            f"{insight_text}"
-        )
-
-# --------------------------------------------------
-# FINANCIAL GOALS
-# --------------------------------------------------
-
-st.divider()
-
-st.subheader("Financial Goals")
+st.subheader("Budget Status")
 
 
 try:
 
-    expenses_worksheet = get_google_sheet()
-
-    spreadsheet = expenses_worksheet.spreadsheet
-
-    goals_worksheet = spreadsheet.worksheet(
-        "Financial_Goals"
+    budget_worksheet = (
+        get_google_sheet()
+        .spreadsheet
+        .worksheet("Budget_Plans")
     )
 
-    goal_records = goals_worksheet.get_all_records()
+    budget_records = (
+        budget_worksheet
+        .get_all_records()
+    )
 
-    goals_df = pd.DataFrame(goal_records)
+except Exception:
+
+    budget_records = []
+
+
+saved_plan = None
+
+
+for record in budget_records:
+
+    try:
+
+        record_year = int(
+            float(
+                record.get(
+                    "Year",
+                    0,
+                )
+            )
+        )
+
+    except (
+        ValueError,
+        TypeError,
+    ):
+
+        continue
+
+
+    if record_year == selected_year:
+
+        saved_plan = record
+
+        break
+
+
+if saved_plan is None:
+
+    st.info(
+        "No budget plan has been saved for "
+        f"{selected_year} yet. "
+        "Create one from Planning."
+    )
+
+else:
+
+    try:
+
+        needs_percent = float(
+            saved_plan.get(
+                "Needs %",
+                0,
+            )
+            or 0
+        )
+
+        investment_percent = float(
+            saved_plan.get(
+                "Investment %",
+                0,
+            )
+            or 0
+        )
+
+        lifestyle_percent = float(
+            saved_plan.get(
+                "Lifestyle %",
+                0,
+            )
+            or 0
+        )
+
+    except (
+        ValueError,
+        TypeError,
+    ):
+
+        needs_percent = 0
+        investment_percent = 0
+        lifestyle_percent = 0
+
+
+    planned_needs = (
+        total_income
+        * needs_percent
+        / 100
+    )
+
+    planned_investment = (
+        total_income
+        * investment_percent
+        / 100
+    )
+
+    planned_lifestyle = (
+        total_income
+        * lifestyle_percent
+        / 100
+    )
+
+
+    def classify_category(category):
+
+        category = str(
+            category
+        ).strip().lower()
+
+
+        investment_keywords = [
+            "investment",
+            "investments",
+            "sip",
+            "mutual fund",
+            "mutual funds",
+            "stocks",
+            "shares",
+            "equity",
+            "ppf",
+            "pf",
+            "epf",
+            "nps",
+            "fd",
+            "fixed deposit",
+            "rd",
+            "recurring deposit",
+        ]
+
+
+        lifestyle_keywords = [
+            "shopping",
+            "entertainment",
+            "travel",
+            "restaurant",
+            "dining",
+            "food",
+            "movies",
+            "hobbies",
+            "luxury",
+            "subscription",
+            "subscriptions",
+            "leisure",
+            "gaming",
+        ]
+
+
+        for keyword in investment_keywords:
+
+            if keyword in category:
+                return "Investment"
+
+
+        for keyword in lifestyle_keywords:
+
+            if keyword in category:
+                return "Lifestyle"
+
+
+        return "Needs"
+
+
+    expense_df = year_df[
+        year_df["Type"] == "Expense"
+    ].copy()
+
+
+    if not expense_df.empty:
+
+        expense_df["Planning Bucket"] = (
+            expense_df["Category"]
+            .apply(
+                classify_category
+            )
+        )
+
+
+    actual_needs = expense_df.loc[
+        expense_df["Planning Bucket"]
+        == "Needs",
+        "Expense Amount",
+    ].sum()
+
+
+    actual_investment = expense_df.loc[
+        expense_df["Planning Bucket"]
+        == "Investment",
+        "Expense Amount",
+    ].sum()
+
+
+    actual_lifestyle = expense_df.loc[
+        expense_df["Planning Bucket"]
+        == "Lifestyle",
+        "Expense Amount",
+    ].sum()
+
+
+    budget_data = pd.DataFrame(
+        {
+            "Planned": [
+                planned_needs,
+                planned_investment,
+                planned_lifestyle,
+            ],
+            "Actual": [
+                actual_needs,
+                actual_investment,
+                actual_lifestyle,
+            ],
+        },
+        index=[
+            "Needs",
+            "Investment",
+            "Lifestyle",
+        ],
+    )
+
+
+    st.bar_chart(
+        budget_data,
+    )
+
+
+    col1, col2, col3 = st.columns(3)
+
+
+    with col1:
+
+        difference = (
+            planned_needs
+            - actual_needs
+        )
+
+        if difference >= 0:
+
+            st.success(
+                f"Needs\n\n"
+                f"₹{difference:,.2f} remaining"
+            )
+
+        else:
+
+            st.warning(
+                f"Needs\n\n"
+                f"₹{abs(difference):,.2f} over budget"
+            )
+
+
+    with col2:
+
+        difference = (
+            planned_investment
+            - actual_investment
+        )
+
+        if difference >= 0:
+
+            st.success(
+                f"Investment\n\n"
+                f"₹{difference:,.2f} remaining"
+            )
+
+        else:
+
+            st.warning(
+                f"Investment\n\n"
+                f"₹{abs(difference):,.2f} over budget"
+            )
+
+
+    with col3:
+
+        difference = (
+            planned_lifestyle
+            - actual_lifestyle
+        )
+
+        if difference >= 0:
+
+            st.success(
+                f"Lifestyle\n\n"
+                f"₹{difference:,.2f} remaining"
+            )
+
+        else:
+
+            st.warning(
+                f"Lifestyle\n\n"
+                f"₹{abs(difference):,.2f} over budget"
+            )
+
+
+# ==================================================
+# GOALS SUMMARY
+# ==================================================
+
+st.divider()
+
+st.subheader("Goals")
+
+
+try:
+
+    spreadsheet = get_google_sheet().spreadsheet
+
+    goals_worksheet = (
+        spreadsheet
+        .worksheet("Financial_Goals")
+    )
+
+    goals_records = (
+        goals_worksheet
+        .get_all_records()
+    )
+
+    goals_df = pd.DataFrame(
+        goals_records
+    )
 
 except Exception:
 
@@ -794,7 +574,7 @@ if goals_df.empty:
 
     st.info(
         "No financial goals created yet. "
-        "Create a goal from the Goals section."
+        "Create your first goal from Goals."
     )
 
 else:
@@ -804,27 +584,64 @@ else:
         errors="coerce",
     ).fillna(0)
 
+
     goals_df["Current Saved"] = pd.to_numeric(
         goals_df["Current Saved"],
         errors="coerce",
     ).fillna(0)
 
 
+    goals_df["Remaining"] = (
+        goals_df["Target Amount"]
+        - goals_df["Current Saved"]
+    ).clip(
+        lower=0
+    )
+
+
+    goals_df["Progress"] = 0.0
+
+
+    valid_targets = (
+        goals_df["Target Amount"]
+        > 0
+    )
+
+
+    goals_df.loc[
+        valid_targets,
+        "Progress",
+    ] = (
+        goals_df.loc[
+            valid_targets,
+            "Current Saved",
+        ]
+        /
+        goals_df.loc[
+            valid_targets,
+            "Target Amount",
+        ]
+    )
+
+
+    goals_df["Progress"] = (
+        goals_df["Progress"]
+        .clip(
+            lower=0,
+            upper=1,
+        )
+    )
+
+
     active_goals = goals_df[
-        goals_df["Current Saved"]
-        < goals_df["Target Amount"]
+        goals_df["Remaining"] > 0
     ].copy()
 
 
     completed_goals = goals_df[
-        goals_df["Current Saved"]
-        >= goals_df["Target Amount"]
+        goals_df["Remaining"] <= 0
     ].copy()
 
-
-    # ----------------------------------------------
-    # GOAL SUMMARY
-    # ----------------------------------------------
 
     col1, col2, col3 = st.columns(3)
 
@@ -848,9 +665,9 @@ else:
     with col3:
 
         total_remaining = (
-            active_goals["Target Amount"]
-            - active_goals["Current Saved"]
-        ).clip(lower=0).sum()
+            active_goals["Remaining"]
+            .sum()
+        )
 
         st.metric(
             "Total Remaining",
@@ -858,20 +675,7 @@ else:
         )
 
 
-    st.divider()
-
-
-    # ----------------------------------------------
-    # SHOW ACTIVE GOALS
-    # ----------------------------------------------
-
-    if active_goals.empty:
-
-        st.success(
-            "🎉 All your financial goals are completed!"
-        )
-
-    else:
+    if not active_goals.empty:
 
         for _, goal in active_goals.iterrows():
 
@@ -879,130 +683,232 @@ else:
                 goal["Goal Name"]
             )
 
-            target_amount = float(
-                goal["Target Amount"]
-            )
-
             current_saved = float(
                 goal["Current Saved"]
             )
 
-            remaining_amount = max(
-                target_amount - current_saved,
-                0,
+            target_amount = float(
+                goal["Target Amount"]
+            )
+
+            remaining = float(
+                goal["Remaining"]
+            )
+
+            progress = float(
+                goal["Progress"]
             )
 
 
-            if target_amount > 0:
-
-                progress = (
-                    current_saved
-                    / target_amount
-                )
-
-                progress = min(
-                    max(progress, 0),
-                    1,
-                )
-
-            else:
-
-                progress = 0
-
-
-            st.markdown(
+            st.write(
                 f"**{goal_name}**"
             )
 
 
             st.progress(
-                progress,
-                text=f"{progress * 100:.1f}% completed",
+                progress
             )
 
 
-            col1, col2, col3 = st.columns(3)
-
-
-            with col1:
-
-                st.caption("Saved")
-
-                st.write(
-                    f"₹{current_saved:,.2f}"
-                )
-
-
-            with col2:
-
-                st.caption("Target")
-
-                st.write(
-                    f"₹{target_amount:,.2f}"
-                )
-
-
-            with col3:
-
-                st.caption("Remaining")
-
-                st.write(
-                    f"₹{remaining_amount:,.2f}"
-                )
-
-
-            target_date_text = str(
-                goal["Target Date"]
+            st.caption(
+                f"₹{current_saved:,.2f} saved "
+                f"of ₹{target_amount:,.2f} "
+                f"• ₹{remaining:,.2f} remaining "
+                f"• {progress * 100:.1f}%"
             )
 
 
-            try:
+# ==================================================
+# FINANCIAL HEALTH SUMMARY
+# ==================================================
 
-                target_date = pd.to_datetime(
-                    target_date_text,
-                    dayfirst=True,
-                ).date()
+st.divider()
 
-
-                today = date.today()
-
-                days_remaining = (
-                    target_date - today
-                ).days
+st.subheader("Financial Health")
 
 
-                if days_remaining > 0:
+if total_income <= 0:
 
-                    months_remaining = max(
-                        days_remaining / 30.44,
-                        1,
-                    )
+    st.error(
+        "Needs Attention"
+    )
+
+    st.caption(
+        "Add income transactions to analyse "
+        "your financial health."
+    )
+
+elif net_savings < 0:
+
+    st.error(
+        "Needs Attention"
+    )
+
+    st.caption(
+        "Your expenses are currently higher "
+        "than your income."
+    )
+
+elif savings_rate >= 30:
+
+    st.success(
+        "Strong"
+    )
+
+    st.caption(
+        "You are maintaining a strong savings rate."
+    )
+
+elif savings_rate >= 20:
+
+    st.info(
+        "Good"
+    )
+
+    st.caption(
+        "Your savings rate is in a healthy range."
+    )
+
+elif savings_rate >= 10:
+
+    st.warning(
+        "Moderate"
+    )
+
+    st.caption(
+        "There is room to improve your savings rate."
+    )
+
+else:
+
+    st.warning(
+        "Needs Improvement"
+    )
+
+    st.caption(
+        "Consider reviewing your spending and "
+        "budget allocation."
+    )
 
 
-                    required_monthly_saving = (
-                        remaining_amount
-                        / months_remaining
-                    )
+# ==================================================
+# RECENT TRANSACTIONS
+# ==================================================
+
+st.divider()
+
+st.subheader("Recent Activity")
 
 
-                    st.caption(
-                        f"Target: {target_date.strftime('%d/%m/%Y')} "
-                        f"• {days_remaining} days remaining "
-                        f"• Required monthly saving: "
-                        f"₹{required_monthly_saving:,.2f}"
-                    )
-
-                else:
-
-                    st.warning(
-                        "Target date has passed."
-                    )
-
-            except Exception:
-
-                st.caption(
-                    f"Target: {target_date_text}"
-                )
+recent_df = (
+    year_df
+    .sort_values(
+        "Date",
+        ascending=False,
+    )
+    .head(5)
+    .copy()
+)
 
 
-            st.divider()
+recent_df["Date"] = (
+    recent_df["Date"]
+    .dt.strftime(
+        "%d/%m/%Y"
+    )
+)
+
+
+recent_df["Amount"] = (
+    recent_df["Amount"]
+    .abs()
+)
+
+
+recent_df = recent_df[
+    [
+        "Date",
+        "Description",
+        "Category",
+        "Amount",
+        "Type",
+    ]
+]
+
+
+st.dataframe(
+    recent_df,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+
+        "Date": st.column_config.TextColumn(
+            "Date",
+        ),
+
+        "Description": st.column_config.TextColumn(
+            "Description",
+        ),
+
+        "Category": st.column_config.TextColumn(
+            "Category",
+        ),
+
+        "Amount": st.column_config.NumberColumn(
+            "Amount",
+            format="₹%.2f",
+        ),
+
+        "Type": st.column_config.TextColumn(
+            "Type",
+        ),
+    },
+)
+
+
+# ==================================================
+# QUICK INSIGHT
+# ==================================================
+
+st.divider()
+
+st.subheader("Quick Insight")
+
+
+if total_income <= 0:
+
+    st.info(
+        "Start by adding your income transactions."
+    )
+
+elif net_savings < 0:
+
+    st.warning(
+        f"For {selected_year}, your spending is "
+        f"₹{abs(net_savings):,.2f} higher than "
+        "your income."
+    )
+
+elif savings_rate < 10:
+
+    st.warning(
+        f"You saved ₹{net_savings:,.2f} during "
+        f"{selected_year}. Increasing your savings "
+        "rate could strengthen your financial position."
+    )
+
+elif savings_rate < 20:
+
+    st.info(
+        f"You saved ₹{net_savings:,.2f} during "
+        f"{selected_year}. There is room to gradually "
+        "increase your savings rate."
+    )
+
+else:
+
+    st.success(
+        f"You saved ₹{net_savings:,.2f} during "
+        f"{selected_year}, giving you a "
+        f"{savings_rate:.1f}% savings rate."
+    )
