@@ -3,11 +3,11 @@ import pandas as pd
 
 from utils.data import load_expenses
 from utils.sheets import get_google_sheet
-
 from utils.planning import (
     calculate_budget_actuals,
     calculate_planned_amounts,
 )
+
 
 st.set_page_config(
     page_title="Dashboard",
@@ -52,6 +52,7 @@ df["Month Period"] = df["Date"].dt.to_period("M")
 # ==================================================
 
 st.title("Dashboard")
+
 st.caption(
     "Your financial overview and planning summary"
 )
@@ -118,7 +119,7 @@ if total_income > 0:
         * 100
     )
 else:
-    savings_rate = 0
+    savings_rate = 0.0
 
 
 # ==================================================
@@ -239,168 +240,231 @@ st.subheader("Budget Status")
 
 
 try:
-    category_worksheet = (
-        get_google_sheet()
-        .spreadsheet
-        .worksheet("Budget_Categories")
-    )
 
-    category_records = (
-        category_worksheet
-        .get_all_records()
-    )
+    spreadsheet = get_google_sheet().spreadsheet
 
 except Exception:
-    category_records = []
+
+    spreadsheet = None
 
 
-category_mapping = {}
+# --------------------------------------------------
+# Load saved Budget Plan
+# --------------------------------------------------
 
-for record in category_records:
+budget_records = []
 
-    category = str(
-        record.get(
-            "Category",
-            "",
+if spreadsheet is not None:
+
+    try:
+
+        budget_worksheet = (
+            spreadsheet
+            .worksheet("Budget_Plans")
         )
-    ).strip()
 
-    bucket = str(
-        record.get(
-            "Planning Bucket",
-            "",
+        budget_records = (
+            budget_worksheet
+            .get_all_records()
         )
-    ).strip()
 
-    if category and bucket:
-        category_mapping[category] = bucket
+    except Exception:
 
-
-expense_df = year_df[
-    year_df["Type"] == "Expense"
-].copy()
+        budget_records = []
 
 
-actual = calculate_budget_actuals(
-    expense_df,
-    category_mapping,
-)
+saved_plan = None
 
 
-planned = calculate_planned_amounts(
-    total_income,
-    needs_percent,
-    investment_percent,
-    lifestyle_percent,
-)
+for record in budget_records:
+
+    try:
+
+        record_year = int(
+            float(
+                record.get(
+                    "Year",
+                    0,
+                )
+            )
+        )
+
+    except (
+        ValueError,
+        TypeError,
+    ):
+
+        continue
 
 
-    def classify_category(category):
+    if record_year == selected_year:
 
-        category = str(
-            category
-        ).strip().lower()
+        saved_plan = record
 
-
-        investment_keywords = [
-            "investment",
-            "investments",
-            "sip",
-            "mutual fund",
-            "mutual funds",
-            "stocks",
-            "shares",
-            "equity",
-            "ppf",
-            "pf",
-            "epf",
-            "nps",
-            "fd",
-            "fixed deposit",
-            "rd",
-            "recurring deposit",
-        ]
+        break
 
 
-        lifestyle_keywords = [
-            "shopping",
-            "entertainment",
-            "travel",
-            "restaurant",
-            "dining",
-            "food",
-            "movies",
-            "hobbies",
-            "luxury",
-            "subscription",
-            "subscriptions",
-            "leisure",
-            "gaming",
-        ]
+if saved_plan is None:
+
+    st.info(
+        f"No budget plan has been saved for "
+        f"{selected_year} yet. "
+        "Create one from Planning."
+    )
+
+else:
+
+    # --------------------------------------------------
+    # Read saved percentages
+    # --------------------------------------------------
+
+    try:
+
+        needs_percent = float(
+            saved_plan.get(
+                "Needs %",
+                50,
+            )
+            or 50
+        )
+
+    except (
+        ValueError,
+        TypeError,
+    ):
+
+        needs_percent = 50.0
 
 
-        for keyword in investment_keywords:
+    try:
 
-            if keyword in category:
-                return "Investment"
+        investment_percent = float(
+            saved_plan.get(
+                "Investment %",
+                20,
+            )
+            or 20
+        )
+
+    except (
+        ValueError,
+        TypeError,
+    ):
+
+        investment_percent = 20.0
 
 
-        for keyword in lifestyle_keywords:
+    try:
 
-            if keyword in category:
-                return "Lifestyle"
+        lifestyle_percent = float(
+            saved_plan.get(
+                "Lifestyle %",
+                30,
+            )
+            or 30
+        )
+
+    except (
+        ValueError,
+        TypeError,
+    ):
+
+        lifestyle_percent = 30.0
 
 
-        return "Needs"
+    # --------------------------------------------------
+    # Planned amounts
+    # --------------------------------------------------
 
+    planned = calculate_planned_amounts(
+        total_income,
+        needs_percent,
+        investment_percent,
+        lifestyle_percent,
+    )
+
+
+    # --------------------------------------------------
+    # Category mapping
+    # --------------------------------------------------
+
+    category_mapping = {}
+
+
+    if spreadsheet is not None:
+
+        try:
+
+            category_worksheet = (
+                spreadsheet
+                .worksheet("Budget_Categories")
+            )
+
+            category_records = (
+                category_worksheet
+                .get_all_records()
+            )
+
+        except Exception:
+
+            category_records = []
+
+
+        for record in category_records:
+
+            category = str(
+                record.get(
+                    "Category",
+                    "",
+                )
+            ).strip()
+
+
+            bucket = str(
+                record.get(
+                    "Planning Bucket",
+                    "",
+                )
+            ).strip()
+
+
+            if category and bucket:
+
+                category_mapping[
+                    category
+                ] = bucket
+
+
+    # --------------------------------------------------
+    # Actual spending
+    # --------------------------------------------------
 
     expense_df = year_df[
         year_df["Type"] == "Expense"
     ].copy()
 
 
-    if not expense_df.empty:
-
-        expense_df["Planning Bucket"] = (
-            expense_df["Category"]
-            .apply(
-                classify_category
-            )
-        )
+    actual = calculate_budget_actuals(
+        expense_df,
+        category_mapping,
+    )
 
 
-    actual_needs = expense_df.loc[
-        expense_df["Planning Bucket"]
-        == "Needs",
-        "Expense Amount",
-    ].sum()
-
-
-    actual_investment = expense_df.loc[
-        expense_df["Planning Bucket"]
-        == "Investment",
-        "Expense Amount",
-    ].sum()
-
-
-    actual_lifestyle = expense_df.loc[
-        expense_df["Planning Bucket"]
-        == "Lifestyle",
-        "Expense Amount",
-    ].sum()
-
+    # --------------------------------------------------
+    # Budget chart
+    # --------------------------------------------------
 
     budget_data = pd.DataFrame(
         {
             "Planned": [
-                planned_needs,
-                planned_investment,
-                planned_lifestyle,
+                planned["Needs"],
+                planned["Investment"],
+                planned["Lifestyle"],
             ],
             "Actual": [
-                actual_needs,
-                actual_investment,
-                actual_lifestyle,
+                actual["Needs"],
+                actual["Investment"],
+                actual["Lifestyle"],
             ],
         },
         index=[
@@ -416,15 +480,20 @@ planned = calculate_planned_amounts(
     )
 
 
+    # --------------------------------------------------
+    # Budget status cards
+    # --------------------------------------------------
+
     col1, col2, col3 = st.columns(3)
 
 
     with col1:
 
         difference = (
-            planned_needs
-            - actual_needs
+            planned["Needs"]
+            - actual["Needs"]
         )
+
 
         if difference >= 0:
 
@@ -444,9 +513,10 @@ planned = calculate_planned_amounts(
     with col2:
 
         difference = (
-            planned_investment
-            - actual_investment
+            planned["Investment"]
+            - actual["Investment"]
         )
+
 
         if difference >= 0:
 
@@ -466,9 +536,10 @@ planned = calculate_planned_amounts(
     with col3:
 
         difference = (
-            planned_lifestyle
-            - actual_lifestyle
+            planned["Lifestyle"]
+            - actual["Lifestyle"]
         )
+
 
         if difference >= 0:
 
@@ -494,27 +565,30 @@ st.divider()
 st.subheader("Goals")
 
 
-try:
+goals_df = pd.DataFrame()
 
-    spreadsheet = get_google_sheet().spreadsheet
 
-    goals_worksheet = (
-        spreadsheet
-        .worksheet("Financial_Goals")
-    )
+if spreadsheet is not None:
 
-    goals_records = (
-        goals_worksheet
-        .get_all_records()
-    )
+    try:
 
-    goals_df = pd.DataFrame(
-        goals_records
-    )
+        goals_worksheet = (
+            spreadsheet
+            .worksheet("Financial_Goals")
+        )
 
-except Exception:
+        goals_records = (
+            goals_worksheet
+            .get_all_records()
+        )
 
-    goals_df = pd.DataFrame()
+        goals_df = pd.DataFrame(
+            goals_records
+        )
+
+    except Exception:
+
+        goals_df = pd.DataFrame()
 
 
 if goals_df.empty:
@@ -616,6 +690,7 @@ else:
             .sum()
         )
 
+
         st.metric(
             "Total Remaining",
             f"₹{total_remaining:,.2f}",
@@ -630,17 +705,21 @@ else:
                 goal["Goal Name"]
             )
 
+
             current_saved = float(
                 goal["Current Saved"]
             )
+
 
             target_amount = float(
                 goal["Target Amount"]
             )
 
+
             remaining = float(
                 goal["Remaining"]
             )
+
 
             progress = float(
                 goal["Progress"]
@@ -685,6 +764,7 @@ if total_income <= 0:
         "your financial health."
     )
 
+
 elif net_savings < 0:
 
     st.error(
@@ -696,6 +776,7 @@ elif net_savings < 0:
         "than your income."
     )
 
+
 elif savings_rate >= 30:
 
     st.success(
@@ -705,6 +786,7 @@ elif savings_rate >= 30:
     st.caption(
         "You are maintaining a strong savings rate."
     )
+
 
 elif savings_rate >= 20:
 
@@ -716,6 +798,7 @@ elif savings_rate >= 20:
         "Your savings rate is in a healthy range."
     )
 
+
 elif savings_rate >= 10:
 
     st.warning(
@@ -725,6 +808,7 @@ elif savings_rate >= 10:
     st.caption(
         "There is room to improve your savings rate."
     )
+
 
 else:
 
@@ -828,6 +912,7 @@ if total_income <= 0:
         "Start by adding your income transactions."
     )
 
+
 elif net_savings < 0:
 
     st.warning(
@@ -835,6 +920,7 @@ elif net_savings < 0:
         f"₹{abs(net_savings):,.2f} higher than "
         "your income."
     )
+
 
 elif savings_rate < 10:
 
@@ -844,6 +930,7 @@ elif savings_rate < 10:
         "rate could strengthen your financial position."
     )
 
+
 elif savings_rate < 20:
 
     st.info(
@@ -851,6 +938,7 @@ elif savings_rate < 20:
         f"{selected_year}. There is room to gradually "
         "increase your savings rate."
     )
+
 
 else:
 
