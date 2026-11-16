@@ -4,6 +4,10 @@ import pandas as pd
 from utils.data import load_expenses
 from utils.sheets import get_google_sheet
 
+from utils.planning import (
+    calculate_budget_actuals,
+    calculate_planned_amounts,
+)
 
 st.set_page_config(
     page_title="Dashboard",
@@ -235,117 +239,60 @@ st.subheader("Budget Status")
 
 
 try:
-
-    budget_worksheet = (
+    category_worksheet = (
         get_google_sheet()
         .spreadsheet
-        .worksheet("Budget_Plans")
+        .worksheet("Budget_Categories")
     )
 
-    budget_records = (
-        budget_worksheet
+    category_records = (
+        category_worksheet
         .get_all_records()
     )
 
 except Exception:
-
-    budget_records = []
-
-
-saved_plan = None
+    category_records = []
 
 
-for record in budget_records:
+category_mapping = {}
 
-    try:
+for record in category_records:
 
-        record_year = int(
-            float(
-                record.get(
-                    "Year",
-                    0,
-                )
-            )
+    category = str(
+        record.get(
+            "Category",
+            "",
         )
+    ).strip()
 
-    except (
-        ValueError,
-        TypeError,
-    ):
-
-        continue
-
-
-    if record_year == selected_year:
-
-        saved_plan = record
-
-        break
-
-
-if saved_plan is None:
-
-    st.info(
-        "No budget plan has been saved for "
-        f"{selected_year} yet. "
-        "Create one from Planning."
-    )
-
-else:
-
-    try:
-
-        needs_percent = float(
-            saved_plan.get(
-                "Needs %",
-                0,
-            )
-            or 0
+    bucket = str(
+        record.get(
+            "Planning Bucket",
+            "",
         )
+    ).strip()
 
-        investment_percent = float(
-            saved_plan.get(
-                "Investment %",
-                0,
-            )
-            or 0
-        )
-
-        lifestyle_percent = float(
-            saved_plan.get(
-                "Lifestyle %",
-                0,
-            )
-            or 0
-        )
-
-    except (
-        ValueError,
-        TypeError,
-    ):
-
-        needs_percent = 0
-        investment_percent = 0
-        lifestyle_percent = 0
+    if category and bucket:
+        category_mapping[category] = bucket
 
 
-    planned_needs = (
-        total_income
-        * needs_percent
-        / 100
-    )
+expense_df = year_df[
+    year_df["Type"] == "Expense"
+].copy()
 
-    planned_investment = (
-        total_income
-        * investment_percent
-        / 100
-    )
 
-    planned_lifestyle = (
-        total_income
-        * lifestyle_percent
-        / 100
-    )
+actual = calculate_budget_actuals(
+    expense_df,
+    category_mapping,
+)
+
+
+planned = calculate_planned_amounts(
+    total_income,
+    needs_percent,
+    investment_percent,
+    lifestyle_percent,
+)
 
 
     def classify_category(category):
